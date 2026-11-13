@@ -10,10 +10,10 @@ import WispCore
 @MainActor
 final class StartupPage: CardPage {
     override var pageTint: NSColor { PageID.startup.tint }
-    private lazy var titleLines = heading("Login & Background")
+    private lazy var titleLines = heading(L("Login & Background"))
     private var caption: TextLine { titleLines.1 }
-    private let scope = Segmented(["Third Party", "Everything"])
-    private let countTile = Tile("Start with this Mac"), runningTile = Tile("Running now"), cpuTile = Tile("CPU"), memoryTile = Tile("Memory")
+    private let scope = Segmented([L("Third Party"), L("Everything")])
+    private let countTile = Tile(L("Start with this Mac")), runningTile = Tile(L("Running now")), cpuTile = Tile(L("CPU")), memoryTile = Tile(L("Memory"))
     private let flagged = ListCard()
     private let tableCard = CardView()
     private let tableTitle = TextLine()
@@ -55,14 +55,14 @@ final class StartupPage: CardPage {
             tile.caption.text = Theme.header(tile.name, symbol: symbol, tint: pageTint)
             tile.set(text: "–")
         }
-        flagged.title.text = title("Worth a look", symbol: "lightbulb.fill", detail: "")
+        flagged.title.text = title(L("Worth a look"), symbol: "lightbulb.fill", detail: "")
         flagged.isHidden = true
-        tableTitle.text = title("Items", symbol: "list.bullet", detail: "")
-        caption.text = Theme.caption("Reading launch items…")
-        table.columns = [.init(title: "Item", width: 0), .init(title: "Developer", width: 130, right: false),
-                         .init(title: "Kind", width: 64, right: false), .init(title: "Runs", width: 170, right: false),
-                         .init(title: "Status", width: 74, right: false), .init(title: "CPU", width: 90, bar: true),
-                         .init(title: "Memory", width: 64), .init(title: "Last day", width: 60)]
+        tableTitle.text = title(L("Items"), symbol: "list.bullet", detail: "")
+        caption.text = Theme.caption(L("Reading launch items…"))
+        table.columns = [.init(title: L("Item"), width: 0), .init(title: L("Developer"), width: 130, right: false),
+                         .init(title: L("Kind"), width: 64, right: false), .init(title: L("Runs"), width: 170, right: false),
+                         .init(title: L("Status"), width: 74, right: false), .init(title: L("CPU"), width: 90, bar: true),
+                         .init(title: L("Memory"), width: 64), .init(title: L("Last day"), width: 60)]
         table.sortColumn = 5
         table.onSort = { [weak self] _ in self?.fillTable() }
         table.onSelect = { [weak self] id in self?.showActions(for: id) }
@@ -206,25 +206,25 @@ final class StartupPage: CardPage {
         let cores = lastTable.coreCount
         let byKind = Dictionary(grouping: items, by: \.kind)
         countTile.set(text: "\(items.count)")
-        countTile.set(note: [(LaunchItem.Kind.agent, "agents"), (.daemon, "daemons"), (.loginItem, "login items")]
-            .compactMap { kind, word in byKind[kind].map { "\($0.count) \($0.count == 1 ? String(word.dropLast()) : word)" } }
+        countTile.set(note: [(LaunchItem.Kind.agent, L("agents")), (.daemon, L("daemons")), (.loginItem, L("login items"))]
+            .compactMap { kind, word in byKind[kind].map { "\($0.count) \($0.count == 1 && L10n.language == "en" ? String(word.dropLast()) : word)" } }
             .joined(separator: " · "))
         let running = current.filter { $0.status == .running }
         runningTile.set(text: "\(running.count)")
         let waiting = current.filter { $0.status == .loaded }.count
-        runningTile.set(note: waiting > 0 ? "\(waiting) loaded and waiting" : "")
+        runningTile.set(note: waiting > 0 ? L("\(waiting) loaded and waiting") : "")
         let cpu = running.reduce(0) { $0 + $1.cpu }
         cpuTile.set(text: Style.appCPU(cpu, machine: machine, coreCount: cores))
-        cpuTile.set(note: running.max { $0.cpu < $1.cpu }.map { $0.cpu > 0.001 ? "Most in \($0.item.name)" : "Idle" } ?? "")
+        cpuTile.set(note: running.max { $0.cpu < $1.cpu }.map { $0.cpu > 0.001 ? L("Most in \($0.item.name)") : L("Idle") } ?? "")
         let (value, unit) = DashboardView.split(Format.memory(running.reduce(0) { $0 + ($1.cost?.memory ?? 0) }))
         memoryTile.set(text: value, unit: unit)
         let watts = running.reduce(0) { $0 + ($1.cost?.watts ?? 0) }
-        memoryTile.set(note: "\(Format.watts(watts)) between them")
+        memoryTile.set(note: L("\(Format.watts(watts)) between them"))
 
         let leftovers = current.filter { $0.item.isLeftover }.count
-        var parts = ["\(items.count) items", "\(running.count) running"]
-        if leftovers > 0 { parts.append("\(leftovers) left over") }
-        if dormant > 0, scope.selected == 0 { parts.append("\(dormant) more in apps, not turned on") }
+        var parts = [L("\(items.count) items"), L("\(running.count) running")]
+        if leftovers > 0 { parts.append(L("\(leftovers) left over")) }
+        if dormant > 0, scope.selected == 0 { parts.append(L("\(dormant) more in apps, not turned on")) }
         caption.text = Theme.caption(parts.joined(separator: " · "))
 
         let shape = (flagged.isHidden, flagged.rows.filter { !$0.isHidden }.count, table.rows.count)
@@ -241,14 +241,14 @@ final class StartupPage: CardPage {
     private func reason(_ line: Line, machine: Bool, cores: Int) -> String? {
         let item = line.item
         if item.isLeftover {
-            if item.appMissing { return "Its app is no longer installed" }
-            return item.script != nil && !item.scriptExists ? "Its script is gone" : "Its program is gone"
+            if item.appMissing { return L("Its app is no longer installed") }
+            return item.script != nil && !item.scriptExists ? L("Its script is gone") : L("Its program is gone")
         }
         if item.keepAlive, line.cpu > 0.05 || (line.day ?? 0) > 0.02 {
             let usage = line.cpu > 0.05 ? line.cpu : line.day ?? 0
-            return "Kept running, \(Style.appCPU(usage, machine: machine, coreCount: cores)) CPU" + (line.cpu > 0.05 ? " now" : " over the day")
+            return L("Kept running, \(Style.appCPU(usage, machine: machine, coreCount: cores)) CPU") + (line.cpu > 0.05 ? L(" now") : L(" over the day"))
         }
-        if let signer = line.signer, signer.unknown { return "Not signed by a known developer" }
+        if let signer = line.signer, signer.unknown { return L("Not signed by a known developer") }
         return nil
     }
 
@@ -259,8 +259,8 @@ final class StartupPage: CardPage {
         flagged.isHidden = found.isEmpty
         let shown = Array(found.prefix(Self.flaggedLimit))
         let more = found.count - shown.count
-        flagged.title.text = title("Worth a look", symbol: "lightbulb.fill",
-                                   detail: more > 0 ? "\(found.count), first \(shown.count) shown" : "\(found.count)")
+        flagged.title.text = title(L("Worth a look"), symbol: "lightbulb.fill",
+                                   detail: more > 0 ? L("\(found.count), first \(shown.count) shown") : "\(found.count)")
         flagged.set(count: shown.count) { [weak self] row, index in
             let (line, why) = shown[index]
             row.icon = self?.icon(for: line.item)
@@ -299,10 +299,10 @@ final class StartupPage: CardPage {
         table.rows = sorted.map { line in
             let status: String
             switch line.status {
-            case .running: status = "Running"
-            case .loaded: status = "Waiting"
-            case .off: status = "Turned off"
-            case .notLoaded: status = "Not loaded"
+            case .running: status = L("Running")
+            case .loaded: status = L("Waiting")
+            case .off: status = L("Turned off")
+            case .notLoaded: status = L("Not loaded")
             }
             return ColumnTable.Row(id: line.item.id, icon: icon(for: line.item),
                                    cells: [line.item.name, Self.fit(developer(line), 130), line.item.kind.title, Self.fit(line.item.schedule, 170), status,
@@ -311,7 +311,7 @@ final class StartupPage: CardPage {
                                            line.day.map { Style.appCPU($0, machine: machine, coreCount: cores) } ?? "–"],
                                    fraction: line.cpu / peak, faint: line.status != .running)
         }
-        tableTitle.text = title("Items", symbol: "list.bullet", detail: items.isEmpty ? "" : "\(items.count)")
+        tableTitle.text = title(L("Items"), symbol: "list.bullet", detail: items.isEmpty ? "" : "\(items.count)")
     }
 
     /// Cuts text to a column's width with an ellipsis; the table draws other columns without truncating.
@@ -325,7 +325,7 @@ final class StartupPage: CardPage {
 
     private func developer(_ line: Line) -> String {
         if let signer = line.signer { return signer.title }
-        return line.item.isLeftover ? "–" : "Unknown developer"
+        return line.item.isLeftover ? "–" : L("Unknown developer")
     }
 
     private func icon(for item: LaunchItem) -> NSImage {
@@ -341,21 +341,21 @@ final class StartupPage: CardPage {
         guard let line = current.first(where: { $0.item.id == id }) else { return }
         let item = line.item
         let menu = NSMenu()
-        menu.addItem(ActionItem("Reveal in Finder") {
+        menu.addItem(ActionItem(L("Reveal in Finder")) {
             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.path)])
         })
         if let app = item.appPath, FileManager.default.fileExists(atPath: app) {
             let name = ((app as NSString).lastPathComponent as NSString).deletingPathExtension
-            menu.addItem(ActionItem("Show \(name)") { [weak self] in self?.onSelect(.app(app)) })
+            menu.addItem(ActionItem(L("Show \(name)")) { [weak self] in self?.onSelect(.app(app)) })
         } else if let pid = line.cost?.pids.first {
-            menu.addItem(ActionItem("Show Process") { [weak self] in self?.onSelect(.process(pid)) })
+            menu.addItem(ActionItem(L("Show Process")) { [weak self] in self?.onSelect(.process(pid)) })
         }
-        menu.addItem(ActionItem("Open Login Items Settings") {
+        menu.addItem(ActionItem(L("Open Login Items Settings")) {
             if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") { NSWorkspace.shared.open(url) }
         })
         if item.canTrash, line.status != .running {
             menu.addItem(.separator())
-            menu.addItem(ActionItem("Move to Trash…") { [weak self] in self?.confirmTrash(item) })
+            menu.addItem(ActionItem(L("Move to Trash…")) { [weak self] in self?.confirmTrash(item) })
         }
         let point = view.window?.mouseLocationOutsideOfEventStream ?? .zero
         menu.popUp(positioning: nil, at: canvas.convert(point, from: nil), in: canvas)
@@ -365,11 +365,11 @@ final class StartupPage: CardPage {
         let home = NSHomeDirectory() + "/"
         guard item.canTrash, item.path.hasPrefix(home), let window = view.window else { return }
         let alert = NSAlert()
-        alert.messageText = "Move \(item.name) to the Trash?"
-        alert.informativeText = "\((item.path as NSString).abbreviatingWithTildeInPath) points to a program that is no longer on this Mac. "
-            + "Once it is in the Trash it stops loading at login."
-        alert.addButton(withTitle: "Move to Trash")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("Move \(item.name) to the Trash?")
+        alert.informativeText = L("\((item.path as NSString).abbreviatingWithTildeInPath) points to a program that is no longer on this Mac. ")
+            + L("Once it is in the Trash it stops loading at login.")
+        alert.addButton(withTitle: L("Move to Trash"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
             NSWorkspace.shared.recycle([URL(fileURLWithPath: item.path)]) { _, error in

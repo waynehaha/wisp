@@ -178,7 +178,7 @@ final class Sidebar: NSView {
     private let highlight = CALayer()
     private let surface: NSView
     private let content = FlippedContent()
-    private let settingsRow = NavRowButton(title: "Settings", symbol: "gearshape")
+    private let settingsRow = NavRowButton(title: L("Settings"), symbol: "gearshape")
     private var selectedPage: PageID?
 
     final class FlippedContent: NSView {
@@ -254,7 +254,7 @@ final class Sidebar: NSView {
         sysctlbyname("machdep.cpu.brand_string", &bytes, &size, nil, 0)
         let chip = String(cString: bytes).replacingOccurrences(of: "Apple ", with: "")
         let memory = ProcessInfo.processInfo.physicalMemory
-        return "\(chip) · \(Int((Double(memory) / 1_073_741_824).rounded())) GB"
+        return L("\(chip) · \(Int((Double(memory) / 1_073_741_824).rounded())) GB")
     }
 
     override func layout() {
@@ -314,7 +314,7 @@ final class Sidebar: NSView {
         guard open != inSettings else { return }
         inSettings = open
         settingsRow.symbol = open ? "chevron.left" : "gearshape"
-        settingsRow.setAccessibilityLabel(open ? "Back" : "Settings")
+        settingsRow.setAccessibilityLabel(open ? L("Back") : L("Settings"))
         let targets = frames()
         guard window != nil, !Theme.reduceMotion else {
             apply(targets)
@@ -432,7 +432,7 @@ final class Sidebar: NSView {
         if let memory = s.memory { values[.memory] = Format.memory(memory.used).replacingOccurrences(of: " ", with: "\u{2009}") }
         if let gpu = s.gpu?.utilization { values[.gpu] = String(format: "%.0f%%", gpu * 100) }
         if let power = s.power, let cpu = power.cpu { values[.energy] = String(format: "%.0f W", cpu + (power.gpu ?? 0) + (power.ane ?? 0)) }
-        if let ane = s.power?.ane { values[.neural] = ane < 0.05 ? "Idle" : String(format: "%.1f W", ane) }
+        if let ane = s.power?.ane { values[.neural] = ane < 0.05 ? L("Idle") : String(format: "%.1f W", ane) }
         if let net = s.network { values[.network] = Format.rate(net.receivedBytesPerSecond + net.sentBytesPerSecond) }
         if let disk = s.disk { values[.disk] = Format.rate(disk.readBytesPerSecond + disk.writeBytesPerSecond) }
         if let celsius = s.thermal?.cpuCelsius { values[.sensors] = Format.celsius(celsius) }

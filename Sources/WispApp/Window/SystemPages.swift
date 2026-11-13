@@ -57,7 +57,7 @@ final class SensorsCardPage: CardPage {
     override var toolbarHeading: (NSView, NSView)? { (titleLine, caption) }
 
     override init(delegate: AppDelegate) {
-        let title = TextLine(Toolbar.title("Sensors"))
+        let title = TextLine(Toolbar.title(L("Sensors")))
         (titleLine, caption) = (title, TextLine())
         super.init(delegate: delegate)
     }
@@ -67,12 +67,12 @@ final class SensorsCardPage: CardPage {
     override func loadView() {
         super.loadView()
         for view in [temperatures, fans, accessories] as [NSView] { canvas.addSubview(view) }
-        temperatures.title.text = cardTitle("Temperatures", "")
-        fans.title.text = cardTitle("Fans", "")
-        accessories.title.text = cardTitle("Accessories", "")
-        temperatures.empty.text = Theme.caption("No temperature sensors found")
-        fans.empty.text = Theme.caption("This Mac has no fans")
-        accessories.empty.text = Theme.caption("No Bluetooth keyboard, mouse or trackpad reports a battery")
+        temperatures.title.text = cardTitle(L("Temperatures"), "")
+        fans.title.text = cardTitle(L("Fans"), "")
+        accessories.title.text = cardTitle(L("Accessories"), "")
+        temperatures.empty.text = Theme.caption(L("No temperature sensors found"))
+        fans.empty.text = Theme.caption(L("This Mac has no fans"))
+        accessories.empty.text = Theme.caption(L("No Bluetooth keyboard, mouse or trackpad reports a battery"))
     }
 
     override func arrange(width: CGFloat) -> CGFloat {
@@ -96,7 +96,7 @@ final class SensorsCardPage: CardPage {
 
     override func update(system s: SystemSnapshot) {
         guard let t = s.thermal else { return }
-        caption.text = Theme.caption("Thermal pressure \(t.pressure.rawValue)", color: t.pressure == .nominal ? Theme.inkTertiary : Theme.warn)
+        caption.text = Theme.caption(L("Thermal pressure \(L10n.string(t.pressure.rawValue))"), color: t.pressure == .nominal ? Theme.inkTertiary : Theme.warn)
         let sensors = t.sensors
         let before = temperatures.wantedHeight
         temperatures.set(count: sensors.count) { row, index in
@@ -108,9 +108,9 @@ final class SensorsCardPage: CardPage {
         }
         fans.set(count: t.fans.count) { row, index in
             let fan = t.fans[index]
-            row.name = "Fan \(fan.index + 1)"
-            row.note = [fan.minRPM, fan.maxRPM].compactMap { $0 }.count == 2 ? "\(Int(fan.minRPM!))–\(Int(fan.maxRPM!)) rpm" : ""
-            row.value = "\(Int(fan.rpm)) rpm"
+            row.name = L("Fan \(fan.index + 1)")
+            row.note = [fan.minRPM, fan.maxRPM].compactMap { $0 }.count == 2 ? L("\(Int(fan.minRPM!))–\(Int(fan.maxRPM!)) rpm") : ""
+            row.value = L("\(Int(fan.rpm)) rpm")
             row.fraction = fan.maxRPM.map { fan.rpm / max($0, 1) } ?? 0
         }
         if Date().timeIntervalSince(accessoriesAt) > 30 {
@@ -131,11 +131,11 @@ final class SensorsCardPage: CardPage {
 
 @MainActor
 final class NeuralPage: MachinePage {
-    private let now = Tile("Power now"), average = Tile("Average"), peak = Tile("Peak")
+    private let now = Tile(L("Power now")), average = Tile(L("Average")), peak = Tile(L("Peak"))
     private var ring = RecentRing(capacity: HistoryStore.recentSamples)
 
     override func setUp() {
-        hero.range.items = ["Live"]
+        hero.range.items = [L("Live")]
         hero.chart.format = { String(format: $0 >= 1 || $0 == 0 ? "%.0f W" : "%.1f W", $0) }
         hero.chart.minimumCeiling = 1
         hero.figure.format = { (String(format: $0 >= 1 ? "%.1f" : "%.2f", $0), "W") }
@@ -157,22 +157,22 @@ final class NeuralPage: MachinePage {
     override func update(system s: SystemSnapshot) {
         guard let p = s.power else {
             hero.figure.show("–")
-            hero.meta.text = Theme.caption("Chip power is not readable on this Mac")
+            hero.meta.text = Theme.caption(L("Chip power is not readable on this Mac"))
             return
         }
         let watts = p.ane ?? 0
         ring.append(Float(watts))
         refreshChart(force: false)
         hero.figure.set(watts)
-        hero.meta.text = Theme.caption(watts > 0.01 ? "In use · macOS does not say which app is using it" : "Idle · nothing is running models on it now")
+        hero.meta.text = Theme.caption(watts > 0.01 ? L("In use · macOS does not say which app is using it") : L("Idle · nothing is running models on it now"))
         hero.needsLayout = true
         let values = ring.values
         now.set(text: String(format: "%.2f", watts), unit: "W")
-        now.set(note: "Right now")
+        now.set(note: L("Right now"))
         average.set(text: String(format: "%.2f", Double(values.reduce(0, +)) / Double(max(values.count, 1))), unit: "W")
-        average.set(note: "In the chart above")
+        average.set(note: L("In the chart above"))
         peak.set(text: String(format: "%.2f", Double(values.max() ?? 0)), unit: "W")
-        peak.set(note: "In the chart above")
+        peak.set(note: L("In the chart above"))
     }
 
     override func update(table: ProcessTable) {}
@@ -198,7 +198,7 @@ final class DeviceCard: CardView {
     required init?(coder: NSCoder) { fatalError() }
 
     func show(volume: Float?) {
-        if let volume { level.show(String(format: "%.0f", volume * 100), unit: "%") } else { level.show("Fixed") }
+        if let volume { level.show(String(format: "%.0f", volume * 100), unit: "%") } else { level.show(L("Fixed")) }
     }
 
     override func layout() {
@@ -218,7 +218,7 @@ final class SoundPage: CardPage {
     private let output = DeviceCard()
     private let input = DeviceCard()
     private let apps = ListCard()
-    private lazy var titleLines = heading("Sound")
+    private lazy var titleLines = heading(L("Sound"))
     private var caption: TextLine { titleLines.1 }
     private var checkedAt = Date.distantPast
     private var devices: [AudioDevice] = []
@@ -226,10 +226,10 @@ final class SoundPage: CardPage {
     override func loadView() {
         super.loadView()
         for view in [output, input, apps] as [NSView] { canvas.addSubview(view) }
-        output.title.text = cardTitle("Output", "")
-        input.title.text = cardTitle("Input", "")
-        apps.title.text = cardTitle("Apps with sound open", "")
-        apps.empty.text = Theme.caption("No app has sound open")
+        output.title.text = cardTitle(L("Output"), "")
+        input.title.text = cardTitle(L("Input"), "")
+        apps.title.text = cardTitle(L("Apps with sound open"), "")
+        apps.empty.text = Theme.caption(L("No app has sound open"))
         for (card, isInput) in [(output, false), (input, true)] {
             card.slider.target = self
             card.slider.action = isInput ? #selector(inputVolume(_:)) : #selector(outputVolume(_:))
@@ -277,7 +277,7 @@ final class SoundPage: CardPage {
             // daemons are left out unless they are making sound.
             let group = groupOf[client.pid]
             guard group?.kind == .app || client.playing || client.recording else { continue }
-            let name = group?.name ?? NSRunningApplication(processIdentifier: client.pid)?.localizedName ?? "Process \(client.pid)"
+            let name = group?.name ?? NSRunningApplication(processIdentifier: client.pid)?.localizedName ?? L("Process \(client.pid)")
             let icon = group.map { Icons.icon(for: $0) } ?? NSRunningApplication(processIdentifier: client.pid)?.icon
             var entry = byApp[name] ?? (name, icon, false, false)
             entry.playing = entry.playing || client.playing
@@ -286,13 +286,13 @@ final class SoundPage: CardPage {
         }
         let sorted = byApp.values.sorted { ($0.playing || $0.recording ? 0 : 1, $0.name) < ($1.playing || $1.recording ? 0 : 1, $1.name) }
         let playing = sorted.filter(\.playing).count
-        caption.text = Theme.caption("\(sorted.count) apps with sound open · \(playing == 0 ? "none" : "\(playing)") playing")
+        caption.text = Theme.caption(L("\(sorted.count) apps with sound open · \(playing == 0 ? L("none") : "\(playing)") playing"))
         apps.set(count: sorted.count) { row, index in
             let entry = sorted[index]
             row.icon = entry.icon ?? NSImage(systemSymbolName: "speaker.wave.2", accessibilityDescription: nil)
             row.name = entry.name
-            row.note = entry.recording ? "Using the microphone" : ""
-            row.value = entry.playing ? "Playing" : (entry.recording ? "Recording" : "Silent")
+            row.note = entry.recording ? L("Using the microphone") : ""
+            row.value = entry.playing ? L("Playing") : (entry.recording ? L("Recording") : L("Silent"))
             row.showsBar = false
         }
         relayout()
@@ -323,20 +323,20 @@ final class BluetoothPage: CardPage {
     private let header = CardView()
     private let headline = TextLine()
     private let detail = TextLine()
-    private lazy var settingsButton = ActionButton(title: "Bluetooth Settings…", target: self, action: #selector(openSettings))
+    private lazy var settingsButton = ActionButton(title: L("Bluetooth Settings…"), target: self, action: #selector(openSettings))
     private var asking = false
     private let list = ListCard()
     private var checkedAt = Date.distantPast
-    private lazy var titleLines = heading("Bluetooth")
+    private lazy var titleLines = heading(L("Bluetooth"))
 
     override func loadView() {
         super.loadView()
-        titleLines.1.text = Theme.caption("Paired devices and their batteries")
+        titleLines.1.text = Theme.caption(L("Paired devices and their batteries"))
         canvas.addSubview(header)
         canvas.addSubview(list)
         for view in [headline, detail, settingsButton] as [NSView] { header.addSubview(view) }
-        list.title.text = cardTitle("Devices", "")
-        list.empty.text = Theme.caption(Bluetooth.allowed ? "No paired devices" : "Wisp needs Bluetooth access to list devices")
+        list.title.text = cardTitle(L("Devices"), "")
+        list.empty.text = Theme.caption(Bluetooth.allowed ? L("No paired devices") : L("Wisp needs Bluetooth access to list devices"))
     }
 
     override func arrange(width: CGFloat) -> CGFloat {
@@ -354,30 +354,30 @@ final class BluetoothPage: CardPage {
         guard Date().timeIntervalSince(checkedAt) > 10 || asking else { return }
         checkedAt = Date()
         if Bluetooth.undecided, !asking {
-            headline.text = NSAttributedString(string: "Bluetooth access", attributes: [.font: Theme.sans(16, .medium), .foregroundColor: Theme.ink])
-            detail.text = Theme.caption("Wisp asks macOS once, then lists your devices and their batteries")
-            settingsButton.title = "Allow…"
+            headline.text = NSAttributedString(string: L("Bluetooth access"), attributes: [.font: Theme.sans(16, .medium), .foregroundColor: Theme.ink])
+            detail.text = Theme.caption(L("Wisp asks macOS once, then lists your devices and their batteries"))
+            settingsButton.title = L("Allow…")
             settingsButton.action = #selector(allow)
             relayout()
             return
         }
-        settingsButton.title = "Bluetooth Settings…"
+        settingsButton.title = L("Bluetooth Settings…")
         settingsButton.action = #selector(openSettings)
         let devices = Bluetooth.devices(asking: asking)
         asking = false
         let connected = devices.filter(\.connected)
-        headline.text = NSAttributedString(string: "\(connected.count) connected",
+        headline.text = NSAttributedString(string: L("\(connected.count) connected"),
                                            attributes: [.font: Theme.sans(16, .medium), .foregroundColor: Theme.ink])
         let batteries = connected.filter { $0.battery != nil }.count
-        detail.text = Theme.caption("\(batteries == 0 ? "No battery reported" : "\(batteries) report a battery") · \(devices.count - connected.count) paired, away")
+        detail.text = Theme.caption(L("\(batteries == 0 ? L("No battery reported") : L("\(batteries) report a battery")) · \(devices.count - connected.count) paired, away"))
         list.set(count: devices.count) { row, index in
             let device = devices[index]
             let symbol = ["Headphones": "headphones", "Phone": "iphone", "Keyboard": "keyboard", "Mouse": "computermouse",
                           "Computer": "laptopcomputer"][device.kind] ?? "dot.radiowaves.left.and.right"
             row.icon = NSImage(systemSymbolName: symbol, accessibilityDescription: device.kind)
             row.name = device.name
-            row.note = device.kind
-            row.value = device.battery.map { "\($0)%" } ?? (device.connected ? "Not reported" : "Away")
+            row.note = L10n.string(device.kind)
+            row.value = device.battery.map { "\($0)%" } ?? (device.connected ? L("Not reported") : L("Away"))
             row.fraction = Double(device.battery ?? 0) / 100
             row.showsBar = device.battery != nil
             row.barColor = (device.battery ?? 100) <= 15 ? Theme.bad : Theme.good

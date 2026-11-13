@@ -25,7 +25,7 @@ public enum Bluetooth {
         let paired = (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice]) ?? []
         let batteries = Dictionary(Accessories.batteries().map { ($0.name, $0.percent) }, uniquingKeysWith: { first, _ in first })
         return paired.map { device in
-            let name = device.name ?? device.addressString ?? "Device"
+            let name = device.name ?? device.addressString ?? L("Device")
             return BluetoothDevice(name: name, address: device.addressString ?? "", connected: device.isConnected(),
                                    kind: kind(major: device.deviceClassMajor, minor: device.deviceClassMinor), battery: batteries[name])
         }

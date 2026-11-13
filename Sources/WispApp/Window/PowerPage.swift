@@ -7,13 +7,13 @@ import WispCore
 /// and sleep cards, with no battery cards at all. `PowerPageLayout` decides which.
 @MainActor
 final class PowerPage: MachinePage {
-    nonisolated static var title: String { MachinePower.hasBattery ? "Battery" : "Power" }
+    nonisolated static var title: String { MachinePower.hasBattery ? L("Battery") : L("Power") }
 
     private let layout = PowerPageLayout(hasBattery: MachinePower.hasBattery, hasSystemPower: MachinePower.hasBattery)
     private var hasBattery: Bool { layout.batteryFilter }
 
-    private let systemPower = Tile("Mac draws now"), adapter = Tile("Adapter"), chip = Tile("Chip power")
-    private let lowPower = Tile("Low Power Mode"), screenOn = Tile("Screen on"), drain = Tile("Drain"), mostPower = Tile("Using most power")
+    private let systemPower = Tile(L("Mac draws now")), adapter = Tile(L("Adapter")), chip = Tile(L("Chip power"))
+    private let lowPower = Tile(L("Low Power Mode")), screenOn = Tile(L("Screen on")), drain = Tile(L("Drain")), mostPower = Tile(L("Using most power"))
     private let bands = ChargeBands()
     private let health = HealthCard()
     private let awake = ListCard()
@@ -45,11 +45,11 @@ final class PowerPage: MachinePage {
         }
 
         if hasBattery {
-            hero.range.items = ["Day", "Week"]
+            hero.range.items = [L("Day"), L("Week")]
             hero.figure.format = { (String(format: "%.0f", $0), "%") }
             hero.chart.ceiling = 100
             hero.chart.format = { String(format: "%.0f%%", $0) }
-            hero.chart.names = ("Charge", "")
+            hero.chart.names = (L("Charge"), "")
             hero.addSubview(bands, positioned: .below, relativeTo: hero.chart)
             hero.chart.postsFrameChangedNotifications = true
             NotificationCenter.default.addObserver(self, selector: #selector(chartMoved), name: NSView.frameDidChangeNotification, object: hero.chart)
@@ -60,18 +60,18 @@ final class PowerPage: MachinePage {
             hero.figure.format = { (String(format: $0 >= 10 ? "%.0f" : "%.1f", $0), "W") }
         }
 
-        awake.title.text = cardTitle("Keeping this Mac awake", "")
-        awake.empty.text = Theme.caption("Nothing is keeping this Mac awake")
-        energy.title.text = cardTitle(hasBattery ? "Battery used by apps" : "Energy used by apps", "")
+        awake.title.text = cardTitle(L("Keeping this Mac awake"), "")
+        awake.empty.text = Theme.caption(L("Nothing is keeping this Mac awake"))
+        energy.title.text = cardTitle(hasBattery ? L("Battery used by apps") : L("Energy used by apps"), "")
         energy.filter.isHidden = !hasBattery
         energy.onChange = { [weak self] in self?.refreshEnergy() }
         energy.table.onSelect = { [weak self] id in self?.onSelect(.app(id)) }
-        health.title.text = cardTitle("Battery health", "")
+        health.title.text = cardTitle(L("Battery health"), "")
         placeExtras()
 
-        table.columns = [.init(title: "App", width: 0), .init(title: "Power", width: 150, bar: true), .init(title: "Wake-ups", width: 80),
-                         .init(title: "CPU", width: 70), .init(title: "Memory", width: 80)]
-        tableTitle.text = cardTitle("Apps now", "by power")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("Power"), width: 150, bar: true), .init(title: L("Wake-ups"), width: 80),
+                         .init(title: L("CPU"), width: 70), .init(title: L("Memory"), width: 80)]
+        tableTitle.text = cardTitle(L("Apps now"), L("by power"))
     }
 
     private func tile(_ kind: PowerTile) -> Tile {
@@ -109,7 +109,7 @@ final class PowerPage: MachinePage {
 
     private func chargingLegend() -> NSAttributedString {
         let text = NSMutableAttributedString(string: "● ", attributes: [.font: Theme.mono(10), .foregroundColor: Theme.good])
-        text.append(Theme.caption("Charging"))
+        text.append(Theme.caption(L("Charging")))
         return text
     }
 
@@ -154,17 +154,17 @@ final class PowerPage: MachinePage {
         let minutes = BatteryStats.screenOnMinutes(samples, since: today)
         if minutes > 0 {
             screenOn.set(text: Format.duration(Double(minutes) * 60))
-            screenOn.set(note: "On battery today")
+            screenOn.set(note: L("On battery today"))
         } else {
             screenOn.set(text: "–")
-            screenOn.set(note: "No time on battery today")
+            screenOn.set(note: L("No time on battery today"))
         }
         if let rate = BatteryStats.drainPerHour(samples, since: today) {
-            drain.set(text: String(format: rate >= 10 ? "%.0f" : "%.1f", rate), unit: "% an hour")
-            drain.set(note: "Average on battery today")
+            drain.set(text: String(format: rate >= 10 ? "%.0f" : "%.1f", rate), unit: L("% an hour"))
+            drain.set(note: L("Average on battery today"))
         } else {
             drain.set(text: "–")
-            drain.set(note: minutes > 0 ? "Needs ten minutes on battery" : "No time on battery today")
+            drain.set(note: minutes > 0 ? L("Needs ten minutes on battery") : L("No time on battery today"))
         }
     }
 
@@ -172,9 +172,9 @@ final class PowerPage: MachinePage {
         if !hasBattery {
             if let p = s.power, let cpu = p.cpu {
                 hero.figure.set(cpu + (p.gpu ?? 0) + (p.ane ?? 0))
-                hero.meta.text = Theme.caption("Chip power · CPU \(Format.watts(cpu)) · GPU \(Format.watts(p.gpu ?? 0)) · Neural Engine \(Format.watts(p.ane ?? 0))")
+                hero.meta.text = Theme.caption(L("Chip power · CPU \(Format.watts(cpu)) · GPU \(Format.watts(p.gpu ?? 0)) · Neural Engine \(Format.watts(p.ane ?? 0))"))
             } else {
-                hero.meta.text = Theme.caption("Chip power is not readable on this Mac")
+                hero.meta.text = Theme.caption(L("Chip power is not readable on this Mac"))
             }
         } else if let b = s.battery {
             hero.figure.set(b.percent)
@@ -192,47 +192,47 @@ final class PowerPage: MachinePage {
     static func state(_ b: BatteryReading) -> String {
         var parts: [String]
         if b.isCharging {
-            parts = ["Charging"]
-            if let minutes = b.minutesRemaining { parts.append(Format.duration(Double(minutes) * 60) + " until full") }
+            parts = [L("Charging")]
+            if let minutes = b.minutesRemaining { parts.append(Format.duration(Double(minutes) * 60) + L(" until full")) }
         } else if b.isPluggedIn {
-            parts = ["Plugged in", b.chargeHeld == true ? String(format: "holding at %.0f%%", b.percent) : "fully charged"]
+            parts = [L("Plugged in"), b.chargeHeld == true ? String(format: L("holding at %.0f%%"), b.percent) : L("fully charged")]
         } else {
-            parts = ["On battery"]
-            if let minutes = b.minutesRemaining { parts.append(Format.duration(Double(minutes) * 60) + " left") }
+            parts = [L("On battery")]
+            if let minutes = b.minutesRemaining { parts.append(Format.duration(Double(minutes) * 60) + L(" left")) }
         }
-        if b.lowPowerMode == true { parts.append("Low Power Mode") }
+        if b.lowPowerMode == true { parts.append(L("Low Power Mode")) }
         return parts.joined(separator: " · ")
     }
 
     override func updateTiles(_ s: SystemSnapshot) {
         if let p = s.power, let cpu = p.cpu {
             chip.set(text: String(format: "%.1f", cpu + (p.gpu ?? 0) + (p.ane ?? 0)), unit: "W")
-            chip.set(note: "CPU \(Format.watts(cpu)) · GPU \(Format.watts(p.gpu ?? 0))")
+            chip.set(note: L("CPU \(Format.watts(cpu)) · GPU \(Format.watts(p.gpu ?? 0))"))
         } else {
             chip.set(text: "–")
-            chip.set(note: "Not readable on this Mac")
+            chip.set(note: L("Not readable on this Mac"))
         }
         let lowPowerOn = s.battery?.lowPowerMode ?? ProcessInfo.processInfo.isLowPowerModeEnabled
-        lowPower.set(text: lowPowerOn ? "On" : "Off")
-        lowPower.set(note: lowPowerOn ? "Slower, lasts longer" : "Change in System Settings")
+        lowPower.set(text: lowPowerOn ? L("On") : L("Off"))
+        lowPower.set(note: lowPowerOn ? L("Slower, lasts longer") : L("Change in System Settings"))
         guard let b = s.battery else { return }
         if let watts = b.systemWatts {
             systemPower.set(text: String(format: watts >= 10 ? "%.0f" : "%.1f", watts), unit: "W")
-            systemPower.set(note: b.isPluggedIn ? "From the adapter" : "From the battery")
+            systemPower.set(note: b.isPluggedIn ? L("From the adapter") : L("From the battery"))
         } else if let watts = b.watts {
             systemPower.set(text: String(format: "%.1f", abs(watts)), unit: "W")
-            systemPower.set(note: b.isCharging ? "Going into the battery" : "Drawn from the battery")
+            systemPower.set(note: b.isCharging ? L("Going into the battery") : L("Drawn from the battery"))
         }
         if b.isPluggedIn {
-            if let watts = b.adapterWatts { adapter.set(text: "\(watts)", unit: "W") } else { adapter.set(text: "On") }
+            if let watts = b.adapterWatts { adapter.set(text: "\(watts)", unit: "W") } else { adapter.set(text: L("On")) }
             if b.isCharging, let watts = b.watts, watts > 0.5 {
-                adapter.set(note: String(format: "Charging at %.0f W", watts))
+                adapter.set(note: String(format: L("Charging at %.0f W"), watts))
             } else {
-                adapter.set(note: b.chargeHeld == true ? "Not charging, charge held" : "Battery full")
+                adapter.set(note: b.chargeHeld == true ? L("Not charging, charge held") : L("Battery full"))
             }
         } else {
             adapter.set(text: "–")
-            adapter.set(note: "Not connected")
+            adapter.set(note: L("Not connected"))
         }
     }
 
@@ -240,7 +240,7 @@ final class PowerPage: MachinePage {
         if let app = busiest(table, by: { $0.watts }), app.watts > 0 {
             mostID = app.id
             mostPower.set(text: app.name)
-            mostPower.set(note: Format.watts(app.watts) + " · \(app.processCount) processes")
+            mostPower.set(note: Format.watts(app.watts) + L(" · \(app.processCount) processes"))
         }
     }
 
@@ -272,7 +272,7 @@ final class PowerPage: MachinePage {
             let app = NSRunningApplication(processIdentifier: blocker.pid)
             row.icon = group.map { Icons.icon(for: $0) } ?? app?.icon ?? NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
             row.name = group?.name ?? app?.localizedName ?? blocker.process
-            row.note = blocker.keepsDisplayOn ? "Keeps the display on" : "Keeps the Mac awake"
+            row.note = blocker.keepsDisplayOn ? L("Keeps the display on") : L("Keeps the Mac awake")
             row.value = blocker.since.map { Format.duration(Date().timeIntervalSince($0)) } ?? ""
             row.showsBar = false
             row.toolTip = blocker.reason.isEmpty ? nil : blocker.reason
@@ -325,10 +325,10 @@ final class PowerPage: MachinePage {
                             cells: [app.name, Self.wattHours(app.wh), total > 0 ? Format.percent(app.wh / total) : "–"],
                             fraction: app.wh / peak)
         }
-        let when = week ? "last 7 days" : "today"
-        energy.title.text = cardTitle(batteryOnly ? "Battery used by apps" : "Energy used by apps",
+        let when = week ? L("last 7 days") : L("today")
+        energy.title.text = cardTitle(batteryOnly ? L("Battery used by apps") : L("Energy used by apps"),
                                       total > 0 ? "\(Self.wattHours(total)) \(when)" : "")
-        energy.empty.text = Theme.caption(batteryOnly ? "No time on battery \(when)" : "Nothing recorded \(when)")
+        energy.empty.text = Theme.caption(batteryOnly ? L("No time on battery \(when)") : L("Nothing recorded \(when)"))
         energy.empty.isHidden = !top.isEmpty
         energy.needsLayout = true
         let before = extras.map(\.1)
@@ -384,12 +384,12 @@ final class HealthCard: CardView {
         figure.font = Theme.figure(30)
         figure.unitFont = Theme.sans(14)
         figure.format = { (String(format: "%.0f", $0), "%") }
-        caption.text = Theme.caption("Maximum capacity")
+        caption.text = Theme.caption(L("Maximum capacity"))
         for row in rows { row.showsBar = false }
         // The longest line that fits; narrow cards keep the part that matters.
-        explain.variants = [Theme.caption("Charge it holds when full, against when new. Below 80% the battery counts as worn"),
-                            Theme.caption("Charge it holds now, against when new. Below 80% counts as worn"),
-                            Theme.caption("Below 80% the battery counts as worn")]
+        explain.variants = [Theme.caption(L("Charge it holds when full, against when new. Below 80% the battery counts as worn")),
+                            Theme.caption(L("Charge it holds now, against when new. Below 80% counts as worn")),
+                            Theme.caption(L("Below 80% the battery counts as worn"))]
         for view in [title, figure, caption, meter, explain] + rows as [NSView] { addSubview(view) }
     }
 
@@ -405,18 +405,18 @@ final class HealthCard: CardView {
         }
         var lines: [(String, String)] = []
         if let full = b.fullChargeCapacity, let design = b.designCapacity {
-            lines.append(("Full charge", "\(Self.grouped(full)) of \(Self.grouped(design)) mAh"))
+            lines.append((L("Full charge"), L("\(Self.grouped(full)) of \(Self.grouped(design)) mAh")))
         }
         if let cycles = b.cycleCount {
-            lines.append(("Cycles", b.designCycleCount.map { "\(Self.grouped(cycles)) of \(Self.grouped($0))" } ?? Self.grouped(cycles)))
+            lines.append((L("Cycles"), b.designCycleCount.map { L("\(Self.grouped(cycles)) of \(Self.grouped($0))") } ?? Self.grouped(cycles)))
         }
-        if let health = b.health { lines.append(("Condition", health < 0.8 ? "Service recommended" : "Normal")) }
+        if let health = b.health { lines.append((L("Condition"), health < 0.8 ? L("Service recommended") : L("Normal"))) }
         if let temp = b.temperature {
             let (value, unit) = Format.temperature(temp)
-            lines.append(("Temperature", value + " " + unit))
+            lines.append((L("Temperature"), value + " " + unit))
         }
         if let made = b.manufactured {
-            lines.append(("Made", made.formatted(.dateTime.month(.abbreviated).year())))
+            lines.append((L("Made"), made.formatted(.dateTime.month(.abbreviated).year())))
         }
         for (index, row) in rows.enumerated() {
             row.isHidden = index >= lines.count
@@ -446,15 +446,15 @@ final class HealthCard: CardView {
 final class AppEnergyCard: CardView {
     static let maxRows = 10
     let title = TextLine()
-    let period = Segmented(["Today", "7 days"])
-    let filter = Segmented(["On battery", "Any power"])
+    let period = Segmented([L("Today"), L("7 days")])
+    let filter = Segmented([L("On battery"), L("Any power")])
     let table = ColumnTable()
     let empty = TextLine()
     var onChange: (() -> Void)?
 
     override init() {
         super.init()
-        table.columns = [.init(title: "App", width: 0), .init(title: "Energy", width: 170, bar: true), .init(title: "Share", width: 60)]
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("Energy"), width: 170, bar: true), .init(title: L("Share"), width: 60)]
         table.onSort = { [weak self] _ in self?.table.sortColumn = 1 }
         period.onChange = { [weak self] _ in self?.onChange?() }
         filter.onChange = { [weak self] _ in self?.onChange?() }

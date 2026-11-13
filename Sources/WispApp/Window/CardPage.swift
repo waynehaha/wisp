@@ -216,7 +216,7 @@ final class ChartCard: CardView {
     let state = Pill()
     let figure = BigNumber()
     let meta = TextLine()
-    let range = Segmented(["Live", "Hour", "Day"])
+    let range = Segmented([L("Live"), L("Hour"), L("Day")])
     let chart = TimeChart()
     let legend = TextLine()
     var onRange: ((Int) -> Void)?
@@ -310,7 +310,7 @@ final class TimeChart: BitmapView {
         let rect = plot
         // Nothing recorded yet (a fresh launch, or an app that just started): no axes to read.
         guard primary.lazy.filter({ !$0.isNaN }).count > 1 || secondary.lazy.filter({ !$0.isNaN }).count > 1 else {
-            let text = Theme.caption("Collecting history", size: 9.5)
+            let text = Theme.caption(L("Collecting history"), size: 9.5)
             let size = text.size()
             text.draw(at: NSPoint(x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2))
             return
@@ -333,7 +333,7 @@ final class TimeChart: BitmapView {
         }
         let count = max(primary.count, secondary.count)
         guard count > 1 else {
-            Theme.caption("Collecting", size: 9.5).draw(at: NSPoint(x: rect.midX - 28, y: rect.midY - 6))
+            Theme.caption(L("Collecting"), size: 9.5).draw(at: NSPoint(x: rect.midX - 28, y: rect.midY - 6))
             return
         }
         let dx = rect.width / CGFloat(count - 1)
@@ -381,7 +381,7 @@ final class TimeChart: BitmapView {
             let span = Double(count - 1) * step
             let oldest = Theme.caption(Self.ago(span), size: 9)
             oldest.draw(at: NSPoint(x: rect.minX, y: rect.maxY + 8))
-            let now = Theme.caption("Now", size: 9)
+            let now = Theme.caption(L("Now"), size: 9)
             now.draw(at: NSPoint(x: rect.maxX - now.size().width, y: rect.maxY + 8))
         }
 
@@ -436,11 +436,11 @@ final class TimeChart: BitmapView {
     }
 
     static func ago(_ seconds: Double) -> String {
-        if seconds < 1 { return "Now" }
-        if seconds < 90 { return "\(Int(seconds)) s ago" }
-        if seconds < 5400 { return "\(Int((seconds / 60).rounded())) min ago" }
-        if seconds >= 172_800 { return "\(Int((seconds / 86400).rounded())) days ago" }
-        return "\(Int((seconds / 3600).rounded())) h ago"
+        if seconds < 1 { return L("Now") }
+        if seconds < 90 { return L("\(Int(seconds)) s ago") }
+        if seconds < 5400 { return L("\(Int((seconds / 60).rounded())) min ago") }
+        if seconds >= 172_800 { return L("\(Int((seconds / 86400).rounded())) days ago") }
+        return L("\(Int((seconds / 3600).rounded())) h ago")
     }
 
     override func updateTrackingAreas() {
@@ -636,7 +636,7 @@ final class ColumnTable: BitmapView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .list }
-    override func accessibilityLabel() -> String? { "Apps" }
+    override func accessibilityLabel() -> String? { L("Apps") }
     override func accessibilityValue() -> Any? {
         rows.prefix(10).map { $0.cells.joined(separator: " ") }.joined(separator: "; ")
     }

@@ -13,7 +13,7 @@ final class WhyBlock: DashboardBlockView {
 
     override init(_ block: DashboardBlock, delegate: AppDelegate) {
         super.init(block, delegate: delegate)
-        check.title = "Check"
+        check.title = L("Check")
         check.onPress = { [weak self] in self?.start() }
         spinner.style = .spinning
         spinner.controlSize = .small
@@ -52,7 +52,7 @@ final class WhyBlock: DashboardBlockView {
             guard let self else { return }
             self.running = false
             self.spinner.stopAnimation(nil)
-            self.check.title = "Check Again"
+            self.check.title = L("Check Again")
             self.check.isHidden = false
             self.show(diagnosis)
         }

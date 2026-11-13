@@ -22,12 +22,12 @@ final class AppsPage: NSViewController, Page, NSOutlineViewDataSource, NSOutline
 
         var title: String {
             switch self {
-            case .name: return "Name"
-            case .cpu: return "CPU"
-            case .memory: return "Memory"
-            case .energy: return "Power"
-            case .disk: return "Disk"
-            case .network: return "Network"
+            case .name: return L("Name")
+            case .cpu: return L("CPU")
+            case .memory: return L("Memory")
+            case .energy: return L("Power")
+            case .disk: return L("Disk")
+            case .network: return L("Network")
             }
         }
 
@@ -53,7 +53,7 @@ final class AppsPage: NSViewController, Page, NSOutlineViewDataSource, NSOutline
         return field
     }()
     private let summary = TextLine()
-    private let titleLabel = Style.label("Apps")
+    private let titleLabel = Style.label(L("Apps"))
     var toolbarHeading: (NSView, NSView)? { (titleLabel, summary) }
     var toolbarItems: [NSView] { [search] }
     private var nodes: [String: Node] = [:]
@@ -119,13 +119,13 @@ final class AppsPage: NSViewController, Page, NSOutlineViewDataSource, NSOutline
         card.layer?.masksToBounds = true
         card.addSubview(scroll)
 
-        search.placeholderString = "Filter apps and processes"
+        search.placeholderString = L("Filter apps and processes")
         search.cell?.lineBreakMode = .byTruncatingTail
         search.delegate = self
         search.translatesAutoresizingMaskIntoConstraints = true
         search.sendsSearchStringImmediately = true
 
-        titleLabel.attributedStringValue = Toolbar.title("Apps")
+        titleLabel.attributedStringValue = Toolbar.title(L("Apps"))
         // The toolbar places these by frame.
         for view in [titleLabel, summary] as [NSView] { view.translatesAutoresizingMaskIntoConstraints = true }
         search.isBordered = false
@@ -227,7 +227,7 @@ final class AppsPage: NSViewController, Page, NSOutlineViewDataSource, NSOutline
         }
 
         // Counts move rarely; a label that changes every tick re-lays out the whole window.
-        summary.variants = ["\(roots.count) apps, \(table.processes.count / 10 * 10)+ processes", "\(roots.count) apps"].map(Toolbar.subtitle)
+        summary.variants = [L("\(roots.count) apps, \(table.processes.count / 10 * 10)+ processes"), L("\(roots.count) apps")].map(Toolbar.subtitle)
     }
 
     private var lastOrder: [String] = []
@@ -343,7 +343,7 @@ final class AppsPage: NSViewController, Page, NSOutlineViewDataSource, NSOutline
         if column == .name {
             let cell = (outlineView.makeView(withIdentifier: id, owner: nil) as? NameCell) ?? NameCell(identifier: id)
             if let app = node.app {
-                let note = app.unreadable == app.processCount ? "needs admin" : (app.processCount > 1 ? "\(app.processCount)" : nil)
+                let note = app.unreadable == app.processCount ? L("needs admin") : (app.processCount > 1 ? "\(app.processCount)" : nil)
                 cell.set(icon: Icons.icon(for: app), name: app.name, note: note)
             } else if let row = node.process {
                 cell.set(icon: nil, name: row.name, note: "\(row.pid)")

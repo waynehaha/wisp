@@ -128,8 +128,8 @@ public final class AlertEngine: @unchecked Sendable {
         let first = hotSince ?? now
         hotSince = first
         guard now.timeIntervalSince(first) >= rules.temperatureMinutes * 60 else { return nil }
-        return fire(.temperature, id: "mac", name: "This Mac", now: now,
-                    ("The CPU is running hot", "\(Format.celsius(celsius)) for more than \(Format.minutes(rules.temperatureMinutes))."))
+        return fire(.temperature, id: "mac", name: L("This Mac"), now: now,
+                    (L("The CPU is running hot"), L("\(Format.celsius(celsius)) for more than \(Format.minutes(rules.temperatureMinutes)).")))
     }
 
     public func evaluate(_ table: ProcessTable, history: HistoryStore?, now: Date = Date()) -> [Alert] {
@@ -160,19 +160,19 @@ public final class AlertEngine: @unchecked Sendable {
         }
 
         sustained(.cpu, enabled: rules.cpuEnabled, minutes: rules.cpuMinutes, value: \.cpu, threshold: rules.cpuThreshold) { app in
-            ("\(app.name) is using a lot of CPU",
-             "\(Format.percent(app.cpu)) of a core for more than \(Format.minutes(self.rules.cpuMinutes)).")
+            (L("\(app.name) is using a lot of CPU"),
+             L("\(Format.percent(app.cpu)) of a core for more than \(Format.minutes(self.rules.cpuMinutes))."))
         }
         sustained(.diskWrites, enabled: rules.diskEnabled, minutes: rules.diskMinutes, value: \.diskWritePerSecond,
                   threshold: rules.diskBytesPerSecond) { app in
-            ("\(app.name) is writing heavily to disk",
-             "\(Format.rate(app.diskWritePerSecond)) for more than \(Format.minutes(self.rules.diskMinutes)).")
+            (L("\(app.name) is writing heavily to disk"),
+             L("\(Format.rate(app.diskWritePerSecond)) for more than \(Format.minutes(self.rules.diskMinutes))."))
         }
         if table.networkMeasured {
             sustained(.network, enabled: rules.networkEnabled, minutes: rules.networkMinutes, value: \.networkPerSecond,
                       threshold: rules.networkBytesPerSecond) { app in
-                ("\(app.name) is moving a lot of data",
-                 "\(Format.rate(app.networkPerSecond)) over the network for more than \(Format.minutes(self.rules.networkMinutes)).")
+                (L("\(app.name) is moving a lot of data"),
+                 L("\(Format.rate(app.networkPerSecond)) over the network for more than \(Format.minutes(self.rules.networkMinutes))."))
             }
         }
 
@@ -182,16 +182,16 @@ public final class AlertEngine: @unchecked Sendable {
             guard let app = table.apps.first(where: { $0.id == limit.appID }) else { continue }
             var over: String?
             if let bytes = limit.memoryBytes, Double(app.memory) > bytes {
-                over = "\(Format.memory(app.memory)) of memory, over your limit of \(Format.memory(bytes))."
+                over = L("\(Format.memory(app.memory)) of memory, over your limit of \(Format.memory(bytes)).")
             } else if let cores = limit.cpu, app.cpu > cores {
-                over = "\(Format.percent(app.cpu)) CPU, over your limit of \(Format.percent(cores))."
+                over = L("\(Format.percent(app.cpu)) CPU, over your limit of \(Format.percent(cores)).")
             }
             guard let over else { continue }
             stillOver.insert(app.id)
             let first = overLimitSince[app.id] ?? now
             overLimitSince[app.id] = first
             if now.timeIntervalSince(first) >= 60,
-               let alert = fire(.appLimit, id: app.id, name: app.name, now: now, ("\(app.name) is over its limit", over)) {
+               let alert = fire(.appLimit, id: app.id, name: app.name, now: now, (L("\(app.name) is over its limit"), over)) {
                 alerts.append(alert)
             }
         }
@@ -202,8 +202,8 @@ public final class AlertEngine: @unchecked Sendable {
                 let series = history.app(app.id, .memory, minutes: rules.memoryWindowMinutes, now: now)
                 if Self.isGrowing(series, by: rules.memoryGrowthBytes),
                    let alert = fire(.memoryGrowth, app, now: now,
-                                    ("\(app.name) keeps growing in memory",
-                                     "Up \(Format.bytes(UInt64(Self.growth(series)))) in the last \(rules.memoryWindowMinutes) minutes, now \(Format.bytes(app.memory)).")) {
+                                    (L("\(app.name) keeps growing in memory"),
+                                     L("Up \(Format.bytes(UInt64(Self.growth(series)))) in the last \(rules.memoryWindowMinutes) minutes, now \(Format.bytes(app.memory))."))) {
                     alerts.append(alert)
                 }
             }

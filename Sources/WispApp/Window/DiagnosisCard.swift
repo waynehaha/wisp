@@ -47,10 +47,10 @@ enum DiagnosisRunner {
         case .quitApp(let id):
             guard let app = delegate.table.app(id), let bundleID = app.bundleIdentifier else { return select(id) }
             let alert = NSAlert()
-            alert.messageText = "Quit \(app.name)?"
-            alert.informativeText = "It is using \(Format.memory(app.memory)) of memory. It quits normally, so it can ask to save your work."
-            alert.addButton(withTitle: "Quit")
-            alert.addButton(withTitle: "Cancel")
+            alert.messageText = L("Quit \(app.name)?")
+            alert.informativeText = L("It is using \(Format.memory(app.memory)) of memory. It quits normally, so it can ask to save your work.")
+            alert.addButton(withTitle: L("Quit"))
+            alert.addButton(withTitle: L("Cancel"))
             alert.icon = Icons.icon(for: app)
             let quit = { NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).forEach { $0.terminate() } }
             if let window {
@@ -69,7 +69,7 @@ final class DiagnoseButton: DrawnView {
     var onPress: (() -> Void)?
     var busy = false { didSet { if busy != oldValue { needsDisplay = true } } }
     private var pressed = false { didSet { needsDisplay = true } }
-    static let label = "Why Is It Slow?"
+    static let label = L("Why Is It Slow?")
     private static let font = Theme.sans(13, .medium)
 
     override init(frame: NSRect) {
@@ -77,7 +77,7 @@ final class DiagnoseButton: DrawnView {
         setAccessibilityElement(true)
         setAccessibilityRole(.button)
         setAccessibilityLabel(Self.label)
-        toolTip = "Looks at this Mac for about 3 seconds"
+        toolTip = L("Looks at this Mac for about 3 seconds")
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -142,13 +142,13 @@ final class DiagnosisCard: CardView {
         super.init()
         isHidden = true
         title.text = NSAttributedString(string: DiagnoseButton.label, attributes: [.font: Theme.sans(15, .bold), .foregroundColor: Theme.ink])
-        again.title = "Check Again"
-        done.title = "Done"
+        again.title = L("Check Again")
+        done.title = L("Done")
         spinner.style = .spinning
         spinner.controlSize = .small
         spinner.isDisplayedWhenStopped = false
-        lookingTitle.text = NSAttributedString(string: "Looking at this Mac", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
-        lookingNote.text = NSAttributedString(string: "CPU, memory, disk, GPU and heat for about 3 seconds",
+        lookingTitle.text = NSAttributedString(string: L("Looking at this Mac"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
+        lookingNote.text = NSAttributedString(string: L("CPU, memory, disk, GPU and heat for about 3 seconds"),
                                               attributes: [.font: Theme.sans(12), .foregroundColor: Theme.inkSecondary])
         meta.alignment = .right
         for view in [title, meta, again, done, spinner, lookingTitle, lookingNote] as [NSView] { addSubview(view) }
@@ -209,7 +209,7 @@ final class DiagnosisCard: CardView {
         items = []
         if !running, let result {
             let time = result.date.formatted(date: .omitted, time: .shortened)
-            meta.text = Theme.caption("Checked at \(time)")
+            meta.text = Theme.caption(L("Checked at \(time)"))
             if result.isHealthy {
                 items.append(("checkmark.circle.fill", Theme.good, nil, result.summary, result.numbers.joined(separator: " · "), nil))
             }
@@ -245,7 +245,7 @@ final class DiagnosisCard: CardView {
             let buttonWidth = item.action.map { ceil(($0.title as NSString).size(withAttributes: [.font: Theme.sans(12, .medium)]).width) + 24 + 12 } ?? 0
             let room = width - 42 - buttonWidth
             if ceil((title as NSString).size(withAttributes: [.font: font]).width) > room {
-                for separator in [" and ", ": "] {
+                for separator in [L(" and "), ": "] {
                     guard let range = title.range(of: separator) else { continue }
                     let rest = String(title[range.upperBound...])
                     title = String(title[..<range.lowerBound])

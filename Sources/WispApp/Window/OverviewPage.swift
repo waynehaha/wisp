@@ -365,7 +365,7 @@ final class AgentLine: DrawnView {
             .draw(in: NSRect(x: 0, y: (bounds.height - 18) / 2, width: 18, height: 18), from: .zero, operation: .sourceOver,
                   fraction: 1, respectFlipped: true, hints: nil)
         (name as NSString).draw(at: NSPoint(x: 30, y: (bounds.height - 16) / 2), withAttributes: [.font: Theme.sans(13), .foregroundColor: Theme.ink])
-        let label = count > 1 ? "\(count) running" : "Running"
+        let label = count > 1 ? L("\(count) running") : L("Running")
         let attributes: [NSAttributedString.Key: Any] = [.font: Theme.sans(11, .semibold), .foregroundColor: Theme.good]
         let size = (label as NSString).size(withAttributes: attributes)
         let badge = NSRect(x: bounds.width - size.width - 16, y: (bounds.height - 20) / 2, width: size.width + 16, height: 20)
@@ -384,13 +384,13 @@ final class AgentLine: DrawnView {
 @MainActor
 final class OverviewPage: CardPage {
     override var pageTint: NSColor { PageID.overview.tint }
-    private let cpu = SummaryCard("CPU", color: PageID.cpu.tint, kind: .cpu)
-    private let memory = SummaryCard("Memory", color: PageID.memory.tint, kind: .memory)
-    private let gpu = SummaryCard("GPU", color: PageID.gpu.tint, kind: .gpu)
-    private let disk = SummaryCard("Storage", color: PageID.disk.tint, kind: .disk)
-    private let network = SummaryCard("Network", color: PageID.network.tint)
-    private let power = SummaryCard("Power", color: PageID.energy.tint)
-    private let thermal = SummaryCard("Temperature", color: PageID.sensors.tint)
+    private let cpu = SummaryCard(L("CPU"), color: PageID.cpu.tint, kind: .cpu)
+    private let memory = SummaryCard(L("Memory"), color: PageID.memory.tint, kind: .memory)
+    private let gpu = SummaryCard(L("GPU"), color: PageID.gpu.tint, kind: .gpu)
+    private let disk = SummaryCard(L("Storage"), color: PageID.disk.tint, kind: .disk)
+    private let network = SummaryCard(L("Network"), color: PageID.network.tint)
+    private let power = SummaryCard(L("Power"), color: PageID.energy.tint)
+    private let thermal = SummaryCard(L("Temperature"), color: PageID.sensors.tint)
     private let developer = CardView()
     private let developerTitle = TextLine()
     private let strip = StatStrip()
@@ -399,9 +399,9 @@ final class OverviewPage: CardPage {
     private var agentLines: [AgentLine] = []
     private let notices = CardView()
     private let noticesTitle = TextLine()
-    private let noticesEmpty = TextLine(Theme.caption("Nothing worth a look right now"))
+    private let noticesEmpty = TextLine(Theme.caption(L("Nothing worth a look right now")))
     private var noticeRows: [NoticeRow] = []
-    private let range = Segmented(["5 Minutes", "Hour", "Day"])
+    private let range = Segmented([L("5 Minutes"), L("Hour"), L("Day")])
     private let open: (PageID) -> Void
     private let select: (Selection?) -> Void
     private let devServers = DevServerScanner()
@@ -441,7 +441,7 @@ final class OverviewPage: CardPage {
         gpu.chart.format = { String(format: "%.0f%%", $0 * 100) }
         disk.figure.format = { value in
             let (number, unit) = DashboardView.split(Format.bytes(UInt64(max(0, value))))
-            return (number, unit + " free")
+            return (number, unit + L(" free"))
         }
         disk.chart.format = { Format.rate(Double($0)).replacingOccurrences(of: "/s", with: "") }
         disk.bar.parts = []
@@ -455,12 +455,12 @@ final class OverviewPage: CardPage {
 
         canvas.addSubview(developer)
         developer.onClick = { [weak self] in self?.open(.ports) }
-        developerTitle.text = Theme.header("Developer", symbol: "chevron.left.forwardslash.chevron.right", tint: Theme.inkSecondary)
-        agentsTitle.text = NSAttributedString(string: "Coding Agents", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
+        developerTitle.text = Theme.header(L("Developer"), symbol: "chevron.left.forwardslash.chevron.right", tint: Theme.inkSecondary)
+        agentsTitle.text = NSAttributedString(string: L("Coding Agents"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
         for view in [developerTitle, strip, agentsTitle, agentsCount] as [NSView] { developer.addSubview(view) }
 
         canvas.addSubview(notices)
-        noticesTitle.text = NSAttributedString(string: "Worth a Look", attributes: [.font: Theme.sans(15, .bold), .foregroundColor: Theme.ink])
+        noticesTitle.text = NSAttributedString(string: L("Worth a Look"), attributes: [.font: Theme.sans(15, .bold), .foregroundColor: Theme.ink])
         notices.addSubview(noticesTitle)
         notices.addSubview(noticesEmpty)
         diagnosis.install(in: canvas) { [weak self] in self?.relayout() }
@@ -581,80 +581,80 @@ final class OverviewPage: CardPage {
         refreshCharts(force: false)
         if let c = s.cpu {
             cpu.figure.set(c.total)
-            cpu.note.text = NSAttributedString(string: c.total >= 0.85 ? "Strained" : c.total >= 0.6 ? "Busy" : "",
+            cpu.note.text = NSAttributedString(string: c.total >= 0.85 ? L("Strained") : c.total >= 0.6 ? L("Busy") : "",
                                                attributes: [.font: Theme.sans(13, .medium), .foregroundColor: Theme.inkTertiary])
             let performance = c.performanceCores, efficiency = c.efficiencyCores
             cpu.context.variants = (performance > 0
-                ? ["\(c.cores.count) cores · \(performance) performance, \(efficiency) efficiency", "\(c.cores.count) cores (\(performance)P + \(efficiency)E)"]
-                : ["\(c.cores.count) cores"]).map { Theme.caption($0) }
-            cpu.facts.items = [.init(label: "User", value: Format.percent(c.user), dot: Theme.blue),
-                               .init(label: "System", value: Format.percent(c.system), dot: Theme.cyan),
-                               .init(label: "Load average", value: String(format: "%.1f", c.loadAverage.first ?? 0), dot: nil)]
+                ? [L("\(c.cores.count) cores · \(performance) performance, \(efficiency) efficiency"), L("\(c.cores.count) cores (\(performance)P + \(efficiency)E)")]
+                : [L("\(c.cores.count) cores")]).map { Theme.caption($0) }
+            cpu.facts.items = [.init(label: L("User"), value: Format.percent(c.user), dot: Theme.blue),
+                               .init(label: L("System"), value: Format.percent(c.system), dot: Theme.cyan),
+                               .init(label: L("Load average"), value: String(format: "%.1f", c.loadAverage.first ?? 0), dot: nil)]
             cpu.needsLayout = true
         }
         if let m = s.memory {
             memory.figure.set(Double(m.used))
             memory.figure.format = { value in
                 let (number, unit) = DashboardView.split(Format.memory(value))
-                return (number, unit + " of " + Format.memory(m.total).replacingOccurrences(of: " GB", with: ""))
+                return (number, unit + L(" of ") + Format.memory(m.total).replacingOccurrences(of: " GB", with: ""))
             }
             memory.state.isHidden = m.pressure == .normal
-            memory.state.text = m.pressure == .warning ? "Pressure: Warning" : "Pressure: Critical"
+            memory.state.text = m.pressure == .warning ? L("Pressure: Warning") : L("Pressure: Critical")
             memory.state.tone = m.pressure == .warning ? .warn : .bad
             memory.state.symbol = "exclamationmark.triangle.fill"
             let total = Double(max(m.total, 1))
             memory.bar.parts = [(Double(m.app) / total, Theme.indigo), (Double(m.wired) / total, Theme.orange),
                                 (Double(m.compressed) / total, Theme.indigo.withAlphaComponent(0.45))]
-            memory.legend.rows = [(Theme.indigo, "App", Format.memory(m.app)), (Theme.orange, "Wired", Format.memory(m.wired)),
-                                  (Theme.indigo.withAlphaComponent(0.45), "Compressed", Format.memory(m.compressed))]
+            memory.legend.rows = [(Theme.indigo, L("App"), Format.memory(m.app)), (Theme.orange, L("Wired"), Format.memory(m.wired)),
+                                  (Theme.indigo.withAlphaComponent(0.45), L("Compressed"), Format.memory(m.compressed))]
             memory.needsLayout = true
         }
         if let g = s.gpu {
             gpu.figure.set(g.utilization)
-            gpu.context.text = Theme.caption([g.coreCount.map { "\($0)-core GPU" }, g.memoryUsed.map { Format.memory($0) + " memory" }]
+            gpu.context.text = Theme.caption([g.coreCount.map { L("\($0)-core GPU") }, g.memoryUsed.map { Format.memory($0) + L(" memory") }]
                 .compactMap { $0 }.joined(separator: " · "))
             let recent = gpu.chart.primary.filter { !$0.isNaN }
             let mean = recent.isEmpty ? 0 : Double(recent.reduce(0, +)) / Double(recent.count)
-            gpu.facts.items = [.init(label: "Average", value: Format.percent(mean), dot: nil),
-                               .init(label: "Peak", value: Format.percent(Double(recent.max() ?? 0)), dot: nil)]
+            gpu.facts.items = [.init(label: L("Average"), value: Format.percent(mean), dot: nil),
+                               .init(label: L("Peak"), value: Format.percent(Double(recent.max() ?? 0)), dot: nil)]
         }
         if let d = s.disk {
             disk.figure.set(Double(d.volumeFree))
             disk.state.isHidden = !Strain.disk(d)
-            disk.state.text = "Low Space"
+            disk.state.text = L("Low Space")
             disk.state.tone = .bad
             let usedFraction = 1 - Double(d.volumeFree) / Double(max(d.volumeTotal, 1))
             disk.bar.parts = [(usedFraction, Strain.disk(d) ? Theme.red : Theme.cyan)]
-            disk.context.text = Theme.caption("\(Format.bytes(d.volumeTotal - d.volumeFree)) of \(Format.bytes(d.volumeTotal)) used")
-            disk.facts.items = [.init(label: "Reading", value: Format.rate(d.readBytesPerSecond), dot: nil),
-                                .init(label: "Writing", value: Format.rate(d.writeBytesPerSecond), dot: nil)]
+            disk.context.text = Theme.caption(L("\(Format.bytes(d.volumeTotal - d.volumeFree)) of \(Format.bytes(d.volumeTotal)) used"))
+            disk.facts.items = [.init(label: L("Reading"), value: Format.rate(d.readBytesPerSecond), dot: nil),
+                                .init(label: L("Writing"), value: Format.rate(d.writeBytesPerSecond), dot: nil)]
             disk.needsLayout = true
         }
         if let n = s.network {
             network.figure.set(n.receivedBytesPerSecond)
-            network.context.text = Theme.caption("Down · \(Format.rate(n.sentBytesPerSecond)) up")
-            network.facts.items = [.init(label: "Today", value: networkToday, dot: nil), .init(label: "Last 7 days", value: networkWeek, dot: nil)]
+            network.context.text = Theme.caption(L("Down · \(Format.rate(n.sentBytesPerSecond)) up"))
+            network.facts.items = [.init(label: L("Today"), value: networkToday, dot: nil), .init(label: L("Last 7 days"), value: networkWeek, dot: nil)]
         }
         if let p = s.power, let cpuWatts = p.cpu {
             power.figure.set(cpuWatts + (p.gpu ?? 0) + (p.ane ?? 0))
-            var items: [Facts.Item] = [.init(label: "CPU", value: Format.watts(cpuWatts), dot: nil),
-                                       .init(label: "GPU", value: Format.watts(p.gpu ?? 0), dot: nil)]
+            var items: [Facts.Item] = [.init(label: L("CPU"), value: Format.watts(cpuWatts), dot: nil),
+                                       .init(label: L("GPU"), value: Format.watts(p.gpu ?? 0), dot: nil)]
             if let b = s.battery {
-                power.context.text = Theme.caption("Battery \(String(format: "%.0f%%", b.percent))" + (b.isCharging ? " · Charging" : b.isPluggedIn ? " · Plugged in" : ""))
-                if let health = b.health { items.append(.init(label: "Health", value: String(format: "%.0f%%", health * 100), dot: nil)) }
-                if let cycles = b.cycleCount { items.append(.init(label: "Cycles", value: "\(cycles)", dot: nil)) }
+                power.context.text = Theme.caption(L("Battery \(String(format: "%.0f%%", b.percent))") + (b.isCharging ? L(" · Charging") : b.isPluggedIn ? L(" · Plugged in") : ""))
+                if let health = b.health { items.append(.init(label: L("Health"), value: String(format: "%.0f%%", health * 100), dot: nil)) }
+                if let cycles = b.cycleCount { items.append(.init(label: L("Cycles"), value: "\(cycles)", dot: nil)) }
             } else {
-                power.context.text = Theme.caption("CPU, GPU and Neural Engine")
+                power.context.text = Theme.caption(L("CPU, GPU and Neural Engine"))
             }
             power.facts.items = items
         }
         if let t = s.thermal {
             thermal.figure.set(t.cpuCelsius)
             thermal.state.isHidden = t.pressure == .nominal
-            thermal.state.text = t.pressure.rawValue.prefix(1).uppercased() + t.pressure.rawValue.dropFirst()
+            thermal.state.text = L10n.string(t.pressure.rawValue)
             thermal.state.tone = t.pressure == .fair ? .warn : .bad
-            thermal.context.variants = ["Hottest sensor · thermal pressure \(t.pressure.rawValue)", "Hottest sensor"].map { Theme.caption($0) }
-            thermal.facts.items = t.fans.enumerated().prefix(2).map { .init(label: "Fan \($0.offset + 1)", value: "\(Int($0.element.rpm)) rpm", dot: nil) }
+            thermal.context.variants = [L("Hottest sensor · thermal pressure \(L10n.string(t.pressure.rawValue))"), L("Hottest sensor")].map { Theme.caption($0) }
+            thermal.facts.items = t.fans.enumerated().prefix(2).map { .init(label: L("Fan \($0.offset + 1)"), value: L("\(Int($0.element.rpm)) rpm"), dot: nil) }
             thermal.needsLayout = true
         }
         if Date().timeIntervalSince(slowAt) > 10 { refreshSlow() }
@@ -678,8 +678,8 @@ final class OverviewPage: CardPage {
         let ports = Set(projects.flatMap { $0.servers.flatMap { $0.ports.map(\.port) } }).count
         let docker = Docker.status(stats: false)
         let running = docker.containers.filter { $0.state == "running" }.count
-        strip.items = [("\(projects.count)", "Projects", ""), ("\(processes)", "Processes", ""), ("\(ports)", "Open ports", ""),
-                       ("\(running)", "Containers", docker.socket.map { Docker.engineName($0) } ?? "")]
+        strip.items = [("\(projects.count)", L("Projects"), ""), ("\(processes)", L("Processes"), ""), ("\(ports)", L("Open ports"), ""),
+                       ("\(running)", L("Containers"), docker.socket.map { Docker.engineName($0) } ?? "")]
 
         let found = agents.find(table)
         let grouped = Dictionary(grouping: found, by: \.kind).map { ($0.key, $0.value.count) }.sorted { $0.1 > $1.1 }
@@ -696,7 +696,7 @@ final class OverviewPage: CardPage {
             line.count = grouped[index].1
             line.showsRule = index < min(grouped.count, 4) - 1
         }
-        agentsCount.text = Theme.caption(found.isEmpty ? "None running" : "\(found.count) running")
+        agentsCount.text = Theme.caption(found.isEmpty ? L("None running") : L("\(found.count) running"))
         refreshNotices(projects: projects, table: table)
         relayout()
     }
@@ -707,29 +707,29 @@ final class OverviewPage: CardPage {
         var list: [Notice] = []
         let s = delegate.system
         if let d = s.disk, Strain.disk(d) {
-            list.append(Notice(symbol: "internaldrive.fill", tint: Theme.red, image: nil, title: "Disk almost full",
-                               detail: "Only \(Format.bytes(d.volumeFree)) left on the startup disk", button: "Show", action: { [weak self] in self?.open(.disk) }))
+            list.append(Notice(symbol: "internaldrive.fill", tint: Theme.red, image: nil, title: L("Disk almost full"),
+                               detail: L("Only \(Format.bytes(d.volumeFree)) left on the startup disk"), button: L("Show"), action: { [weak self] in self?.open(.disk) }))
         }
         if let m = s.memory, m.pressure != .normal, let top = table.apps.max(by: { $0.memory < $1.memory }) {
-            list.append(Notice(symbol: "memorychip.fill", tint: Theme.indigo, image: nil, title: "\(top.name) holds \(Format.memory(top.memory)) of memory",
-                               detail: "Memory is under pressure; it is the largest app", button: "Show",
+            list.append(Notice(symbol: "memorychip.fill", tint: Theme.indigo, image: nil, title: L("\(top.name) holds \(Format.memory(top.memory)) of memory"),
+                               detail: L("Memory is under pressure; it is the largest app"), button: L("Show"),
                                action: { [weak self] in self?.select(.app(top.id)) }))
         }
         let idle = projects.flatMap(\.idleServers)
         if !idle.isEmpty {
             list.append(Notice(symbol: "folder.fill", tint: Theme.gray, image: nil,
-                               title: "\(idle.count) dev server\(idle.count == 1 ? " is" : "s are") idle",
-                               detail: "Still holding ports and memory", button: "Review", action: { [weak self] in self?.open(.ports) }))
+                               title: L("\(idle.count) dev server\(idle.count == 1 ? L(" is") : L("s are")) idle"),
+                               detail: L("Still holding ports and memory"), button: L("Review"), action: { [weak self] in self?.open(.ports) }))
         }
         if let busiest = table.apps.filter({ $0.processCount >= 8 }).max(by: { $0.memory < $1.memory }),
            busiest.memory > 4 << 30, list.count < 4 {
             list.append(Notice(symbol: "app.fill", tint: Theme.blue, image: Icons.icon(for: busiest),
-                               title: "\(busiest.name) is using \(Format.memory(busiest.memory))",
-                               detail: "\(busiest.processCount) processes", button: "Show", action: { [weak self] in self?.select(.app(busiest.id)) }))
+                               title: L("\(busiest.name) is using \(Format.memory(busiest.memory))"),
+                               detail: L("\(busiest.processCount) processes"), button: L("Show"), action: { [weak self] in self?.select(.app(busiest.id)) }))
         }
         if let t = s.thermal, t.pressure != .nominal, list.count < 5 {
-            list.append(Notice(symbol: "thermometer.high", tint: Theme.orange, image: nil, title: "Running warm",
-                               detail: "Thermal pressure is \(t.pressure.rawValue)", button: "Show", action: { [weak self] in self?.open(.sensors) }))
+            list.append(Notice(symbol: "thermometer.high", tint: Theme.orange, image: nil, title: L("Running warm"),
+                               detail: L("Thermal pressure is \(L10n.string(t.pressure.rawValue))"), button: L("Show"), action: { [weak self] in self?.open(.sensors) }))
         }
         for alert in delegate.monitor.perform({ $0.alerts.recent }).suffix(3).reversed() where list.count < 5 {
             list.append(Notice(symbol: "bell.fill", tint: Theme.orange, image: nil, title: alert.title, detail: alert.body, button: nil, action: nil))

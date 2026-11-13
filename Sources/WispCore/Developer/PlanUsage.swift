@@ -66,7 +66,7 @@ public enum PlanUsageReader {
                 usage.windows = record.windows.map { window($0.name, used: $0.used, resets: $0.resets, now: now) }
                 usage.updated = record.updated
             } else if ClaudeStatusLine.state(folder: folder) == .connected {
-                usage.problem = "Waiting for Claude Code's next reply"
+                usage.problem = L("Waiting for Claude Code's next reply")
             } else {
                 continue
             }

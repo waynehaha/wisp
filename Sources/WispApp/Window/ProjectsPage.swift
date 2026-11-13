@@ -45,19 +45,19 @@ final class PortChips: DrawnView {
         let chip = chips[index]
         let menu = NSMenu()
         let url = "http://localhost:\(chip.port)"
-        menu.addItem(ActionItem("Open \(url)") { NSWorkspace.shared.open(URL(string: url)!) })
-        menu.addItem(ActionItem("Copy address") {
+        menu.addItem(ActionItem(L("Open \(url)")) { NSWorkspace.shared.open(URL(string: url)!) })
+        menu.addItem(ActionItem(L("Copy address")) {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(url, forType: .string)
         })
         menu.addItem(.separator())
-        menu.addItem(ActionItem("Stop \(chip.server.name) (\(chip.server.pid))…") { [weak self] in self?.onStop?(chip.server) })
+        menu.addItem(ActionItem(L("Stop \(chip.server.name) (\(chip.server.pid))…")) { [weak self] in self?.onStop?(chip.server) })
         menu.popUp(positioning: nil, at: NSPoint(x: frames()[index].minX, y: bounds.height + 4), in: self)
     }
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .staticText }
-    override func accessibilityValue() -> Any? { "Ports " + chips.map { "\($0.port)" }.joined(separator: ", ") }
+    override func accessibilityValue() -> Any? { L("Ports ") + chips.map { "\($0.port)" }.joined(separator: ", ") }
 }
 
 /// A menu item that runs a closure.
@@ -114,12 +114,12 @@ final class ProjectCard: CardView {
 /// else started in the folder, and the Docker containers of the same name.
 @MainActor
 final class ProjectsPage: CardPage {
-    private lazy var titleLines = heading("Projects")
-    private let memory = Tile("Memory"), cpu = Tile("CPU"), processes = Tile("Processes"), ports = Tile("Open ports")
+    private lazy var titleLines = heading(L("Projects"))
+    private let memory = Tile(L("Memory")), cpu = Tile(L("CPU")), processes = Tile(L("Processes")), ports = Tile(L("Open ports"))
     private let idleCard = CardView()
     private let idleTitle = TextLine()
     private let idleList = TextLine()
-    private lazy var stopAll = ActionButton(title: "Stop All…", target: self, action: #selector(stopIdle))
+    private lazy var stopAll = ActionButton(title: L("Stop All…"), target: self, action: #selector(stopIdle))
     private var cards: [ProjectCard] = []
     private let scanner = DevServerScanner()
     private var projects: [DevProject] = []
@@ -129,7 +129,7 @@ final class ProjectsPage: CardPage {
 
     override func loadView() {
         super.loadView()
-        titleLines.1.text = Theme.caption("Looking for projects…")
+        titleLines.1.text = Theme.caption(L("Looking for projects…"))
         for view in [memory, cpu, processes, ports, idleCard] as [NSView] { canvas.addSubview(view) }
         idleCard.fill = Theme.warnWash
         idleCard.stroke = Theme.warn.withAlphaComponent(0.25)
@@ -172,17 +172,17 @@ final class ProjectsPage: CardPage {
 
     private func fill(_ table: ProcessTable) {
         let processCount = projects.reduce(0) { $0 + $1.processes.count }
-        titleLines.1.text = Theme.caption(projects.isEmpty ? "Nothing running in a project folder"
-                                          : "\(projects.count) running · \(processCount) processes")
+        titleLines.1.text = Theme.caption(projects.isEmpty ? L("Nothing running in a project folder")
+                                          : L("\(projects.count) running · \(processCount) processes"))
         let totalMemory = projects.reduce(0) { $0 + $1.memory }
         let (memoryValue, memoryUnit) = DashboardView.split(Format.memory(totalMemory))
         memory.set(text: memoryValue, unit: memoryUnit)
-        memory.set(note: projects.max { $0.memory < $1.memory }.map { "Most in \($0.name)" } ?? "")
+        memory.set(note: projects.max { $0.memory < $1.memory }.map { L("Most in \($0.name)") } ?? "")
         let totalCPU = projects.reduce(0) { $0 + $1.cpu }
         cpu.set(text: Style.appCPU(totalCPU, machine: delegate.settings.cpuOfMachine, coreCount: table.coreCount))
-        cpu.set(note: "Across every project")
+        cpu.set(note: L("Across every project"))
         processes.set(text: "\(projects.reduce(0) { $0 + $1.processes.count })")
-        processes.set(note: "Servers, watchers, editors")
+        processes.set(note: L("Servers, watchers, editors"))
         let openPorts = Set(projects.flatMap { $0.servers.flatMap { $0.ports.map(\.port) } }).sorted()
         ports.set(text: "\(openPorts.count)")
         ports.set(note: openPorts.prefix(4).map(String.init).joined(separator: " · ") + (openPorts.count > 4 ? " +\(openPorts.count - 4)" : ""))
@@ -191,11 +191,11 @@ final class ProjectsPage: CardPage {
         idleCard.isHidden = idle.isEmpty
         if !idle.isEmpty {
             let held = idle.reduce(0) { $0 + $1.memory }
-            idleTitle.text = NSAttributedString(string: "\(idle.count) dev \(idle.count == 1 ? "server is" : "servers are") running but idle",
+            idleTitle.text = NSAttributedString(string: L("\(idle.count) dev \(idle.count == 1 ? L("server is") : L("servers are")) running but idle"),
                                                 attributes: [.font: Theme.sans(14, .medium), .foregroundColor: Theme.ink])
             let names = Dictionary(grouping: projects.filter { !$0.idleServers.isEmpty }, by: \.name)
                 .map { $0.value.first!.idleServers.count > 1 ? "\($0.key) ×\($0.value.first!.idleServers.count)" : $0.key }.sorted()
-            idleList.text = Theme.caption(names.joined(separator: ", ") + " · holding \(Format.memory(held))", color: Theme.inkSecondary)
+            idleList.text = Theme.caption(names.joined(separator: ", ") + L(" · holding \(Format.memory(held))"), color: Theme.inkSecondary)
         }
 
         while cards.count < projects.count {
@@ -217,18 +217,18 @@ final class ProjectsPage: CardPage {
         card.chips.onStop = { [weak self] server in self?.confirmStop([server]) }
         let idle = project.idleServers.count
         card.badge.isHidden = idle == 0
-        card.badge.text = "\(idle) idle"
+        card.badge.text = L("\(idle) idle")
         let home = NSHomeDirectory()
         let mine = containers.filter { container in
             if let folder = container.folder { return folder == project.path || folder.hasPrefix(project.path + "/") }
             return container.project?.lowercased() == project.name.lowercased()
         }
-        var where_ = project.path.replacingOccurrences(of: home, with: "~") + " · \(project.processes.count) processes"
-        if !mine.isEmpty { where_ += " · \(mine.count) container\(mine.count == 1 ? "" : "s")" }
+        var where_ = project.path.replacingOccurrences(of: home, with: "~") + L(" · \(project.processes.count) processes")
+        if !mine.isEmpty { where_ += L(" · \(mine.count) container\(mine.count == 1 ? "" : L10n.pluralSuffix)") }
         card.path.text = Theme.caption(where_, color: Theme.inkTertiary, size: 9.5)
         let figures = NSMutableAttributedString()
-        for (label, value) in [("CPU", Style.appCPU(project.cpu, machine: delegate.settings.cpuOfMachine, coreCount: table.coreCount)),
-                               ("Power", Format.watts(project.watts)), ("Memory", Format.memory(project.memory))] {
+        for (label, value) in [(L("CPU"), Style.appCPU(project.cpu, machine: delegate.settings.cpuOfMachine, coreCount: table.coreCount)),
+                               (L("Power"), Format.watts(project.watts)), (L("Memory"), Format.memory(project.memory))] {
             figures.append(NSAttributedString(string: value, attributes: [.font: Theme.figure(13, .medium), .foregroundColor: Theme.ink]))
             figures.append(NSAttributedString(string: " " + label.uppercased() + "    ", attributes: [.font: Theme.mono(9), .foregroundColor: Theme.inkTertiary]))
         }
@@ -251,8 +251,8 @@ final class ProjectsPage: CardPage {
             row.dot = server.connections > 0 ? Theme.good : (project.idleServers.contains { $0.pid == server.pid } ? Theme.warn : Theme.inkTertiary)
             row.name = "\(server.name)  \(server.pid)"
             row.note = server.ports.map { "\($0.port)" }.joined(separator: ", ")
-            row.value = server.connections > 0 ? "\(server.connections) connected"
-                : (server.idleSeconds.map { $0 >= 60 ? "Idle " + Format.duration($0) : "Listening" } ?? "")
+            row.value = server.connections > 0 ? L("\(server.connections) connected")
+                : (server.idleSeconds.map { $0 >= 60 ? L("Idle ") + Format.duration($0) : L("Listening") } ?? "")
             row.showsRule = index < project.servers.count - 1
             row.onClick = { [weak self] in self?.onSelect?(.process(server.pid)) }
         }
@@ -264,12 +264,12 @@ final class ProjectsPage: CardPage {
     private func confirmStop(_ servers: [DevServer]) {
         guard !servers.isEmpty, let window = view.window else { return }
         let alert = NSAlert()
-        alert.messageText = servers.count == 1 ? "Stop \(servers[0].name) (\(servers[0].pid))?" : "Stop \(servers.count) idle dev servers?"
+        alert.messageText = servers.count == 1 ? L("Stop \(servers[0].name) (\(servers[0].pid))?") : L("Stop \(servers.count) idle dev servers?")
         alert.informativeText = servers.map { server in
-            "\(server.name) \(server.pid) on " + server.ports.map { "\($0.port)" }.joined(separator: ", ")
-        }.joined(separator: "\n") + "\n\nEach gets a normal quit signal and can save its work first."
-        alert.addButton(withTitle: "Stop")
-        alert.addButton(withTitle: "Cancel")
+            L("\(server.name) \(server.pid) on ") + server.ports.map { "\($0.port)" }.joined(separator: ", ")
+        }.joined(separator: "\n") + L("\n\nEach gets a normal quit signal and can save its work first.")
+        alert.addButton(withTitle: L("Stop"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
             for server in servers { kill(server.pid, SIGTERM) }

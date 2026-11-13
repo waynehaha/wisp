@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Wisp",
+    defaultLocalization: "en",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "WispCore", targets: ["WispCore"]),
@@ -15,6 +16,7 @@ let package = Package(
         // pretending those C handles are Sendable.
         .target(
             name: "WispCore",
+            resources: [.process("Resources")],
             swiftSettings: [.swiftLanguageMode(.v5)],
             linkerSettings: [.linkedFramework("IOKit")]
         ),

@@ -66,7 +66,7 @@ public struct AppStorage: Sendable, Equatable {
         }
 
         let (appSize, _) = measure([bundlePath])
-        parts.append(Part(name: "App", detail: "The app itself", paths: [bundlePath], size: appSize, locked: false))
+        parts.append(Part(name: "App", detail: L("The app itself"), paths: [bundlePath], size: appSize, locked: false))
         var caches: [(String, UInt64)] = []
         if let id {
             let container = library + "/Containers/" + id
@@ -75,32 +75,32 @@ public struct AppStorage: Sendable, Equatable {
                 let (total, found) = measure([container])
                 let (cacheInContainer, _) = measure([containerCaches])
                 if !found.isEmpty {
-                    parts.append(Part(name: "Container", detail: "Its documents, settings and data in the sandbox", paths: found,
+                    parts.append(Part(name: "Container", detail: L("Its documents, settings and data in the sandbox"), paths: found,
                                       size: total > cacheInContainer ? total - cacheInContainer : 0, locked: false))
                 }
                 if cacheInContainer > 0 { caches.append((containerCaches, cacheInContainer)) }
                 let groups = appGroups(bundlePath).map { library + "/Group Containers/" + $0 }
-                add("Group containers", "Data it shares with apps from the same developer", groups)
+                add("Group containers", L("Data it shares with apps from the same developer"), groups)
             } else {
-                add("Container", "Needs Full Disk Access to measure", [container], locked: true)
-                add("Group containers", "Needs Full Disk Access to measure", appGroups(bundlePath).map { library + "/Group Containers/" + $0 }, locked: true)
+                add("Container", L("Needs Full Disk Access to measure"), [container], locked: true)
+                add("Group containers", L("Needs Full Disk Access to measure"), appGroups(bundlePath).map { library + "/Group Containers/" + $0 }, locked: true)
             }
-            add("Application Support", "Databases, downloads and settings", [library + "/Application Support/" + id, library + "/Application Support/" + name])
+            add("Application Support", L("Databases, downloads and settings"), [library + "/Application Support/" + id, library + "/Application Support/" + name])
             for path in [library + "/Caches/" + id, library + "/Caches/" + name] where fm.fileExists(atPath: path) {
                 caches.append((path, measure([path]).0))
             }
-            add("Logs", "Records it keeps for problems", [library + "/Logs/" + id, library + "/Logs/" + name])
-            add("Website data", "Cookies and site storage", [library + "/WebKit/" + id, library + "/HTTPStorages/" + id])
+            add("Logs", L("Records it keeps for problems"), [library + "/Logs/" + id, library + "/Logs/" + name])
+            add("Website data", L("Cookies and site storage"), [library + "/WebKit/" + id, library + "/HTTPStorages/" + id])
             var preferences = [library + "/Preferences/" + id + ".plist"]
             if let byHost = try? fm.contentsOfDirectory(atPath: library + "/Preferences/ByHost") {
                 preferences += byHost.filter { $0.hasPrefix(id + ".") }.map { library + "/Preferences/ByHost/" + $0 }
             }
-            add("Preferences", "Its settings", preferences)
-            add("Saved Application State", "Windows macOS reopens at launch", [library + "/Saved Application State/" + id + ".savedState"])
+            add("Preferences", L("Its settings"), preferences)
+            add("Saved Application State", L("Windows macOS reopens at launch"), [library + "/Saved Application State/" + id + ".savedState"])
         }
         let cacheTotal = caches.reduce(UInt64(0)) { $0 + $1.1 }
         if cacheTotal > 0 || !caches.isEmpty {
-            parts.insert(Part(name: "Caches", detail: "It makes these again as needed", paths: caches.map(\.0), size: cacheTotal, locked: false),
+            parts.insert(Part(name: "Caches", detail: L("It makes these again as needed"), paths: caches.map(\.0), size: cacheTotal, locked: false),
                          at: min(parts.count, 2))
         }
         return AppStorage(parts: parts, caches: caches.map { (path: $0.0, size: $0.1) }, measuredAt: Date())

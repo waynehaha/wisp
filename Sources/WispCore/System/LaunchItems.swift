@@ -9,9 +9,9 @@ public struct LaunchItem: Sendable, Equatable, Identifiable {
 
         public var title: String {
             switch self {
-            case .loginItem: return "Login item"
-            case .agent: return "Agent"
-            case .daemon: return "Daemon"
+            case .loginItem: return L("Login item")
+            case .agent: return L("Agent")
+            case .daemon: return L("Daemon")
             }
         }
     }
@@ -95,37 +95,37 @@ public struct LaunchItem: Sendable, Equatable, Identifiable {
     /// When launchd starts it, in a few words.
     public var schedule: String {
         var parts: [String] = []
-        if runAtLoad || kind == .loginItem { parts.append(kind == .daemon ? "At startup" : "At login") }
-        if keepAlive { parts.append(keepAliveConditional ? "restarted when needed" : "kept running") }
-        if let startInterval, startInterval > 0 { parts.append("every " + Self.interval(startInterval)) }
+        if runAtLoad || kind == .loginItem { parts.append(kind == .daemon ? L("At startup") : L("At login")) }
+        if keepAlive { parts.append(keepAliveConditional ? L("restarted when needed") : L("kept running")) }
+        if let startInterval, startInterval > 0 { parts.append(L("every ") + Self.interval(startInterval)) }
         if !calendar.isEmpty { parts.append(Self.calendarText(calendar)) }
         if let watched = watchPaths.first {
-            parts.append("when \((watched as NSString).lastPathComponent) changes")
+            parts.append(L("when \((watched as NSString).lastPathComponent) changes"))
         }
-        if parts.isEmpty { return "When asked" }
+        if parts.isEmpty { return L("When asked") }
         let text = parts.joined(separator: ", ")
         return text.prefix(1).uppercased() + text.dropFirst()
     }
 
     static func interval(_ seconds: Int) -> String {
-        if seconds % 86_400 == 0 { return seconds == 86_400 ? "day" : "\(seconds / 86_400) days" }
-        if seconds % 3600 == 0 { return seconds == 3600 ? "hour" : "\(seconds / 3600) hours" }
-        if seconds % 60 == 0 { return seconds == 60 ? "minute" : "\(seconds / 60) min" }
-        return "\(seconds) s"
+        if seconds % 86_400 == 0 { return seconds == 86_400 ? L("day") : L("\(seconds / 86_400) days") }
+        if seconds % 3600 == 0 { return seconds == 3600 ? L("hour") : L("\(seconds / 3600) hours") }
+        if seconds % 60 == 0 { return seconds == 60 ? L("minute") : L("\(seconds / 60) min") }
+        return L("\(seconds) s")
     }
 
     static func calendarText(_ entries: [[String: Int]]) -> String {
-        guard entries.count == 1, let entry = entries.first else { return "on a schedule" }
+        guard entries.count == 1, let entry = entries.first else { return L("on a schedule") }
         let time = entry["Hour"].map { String(format: "%d:%02d", $0, entry["Minute"] ?? 0) }
         if let weekday = entry["Weekday"] {
-            let names = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays"]
-            let day = names.indices.contains(weekday) ? names[weekday] : "weekly"
-            return time.map { "\(day) at \($0)" } ?? day
+            let names = [L("Sundays"), L("Mondays"), L("Tuesdays"), L("Wednesdays"), L("Thursdays"), L("Fridays"), L("Saturdays"), L("Sundays")]
+            let day = names.indices.contains(weekday) ? names[weekday] : L("weekly")
+            return time.map { L("\(day) at \($0)") } ?? day
         }
-        if entry["Day"] != nil { return time.map { "monthly at \($0)" } ?? "monthly" }
-        if let time { return "daily at \(time)" }
-        if let minute = entry["Minute"] { return "hourly at :\(String(format: "%02d", minute))" }
-        return "on a schedule"
+        if entry["Day"] != nil { return time.map { L("monthly at \($0)") } ?? L("monthly") }
+        if let time { return L("daily at \(time)") }
+        if let minute = entry["Minute"] { return L("hourly at :\(String(format: "%02d", minute))") }
+        return L("on a schedule")
     }
 }
 
@@ -227,7 +227,7 @@ public struct Signer: Sendable, Equatable {
     public var title: String {
         if apple { return "Apple" }
         if let name { return name }
-        return team ?? "Unknown developer"
+        return team ?? L("Unknown developer")
     }
 
     /// Reads the signature without checking it, which keeps it to a millisecond or so.

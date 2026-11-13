@@ -160,22 +160,22 @@ public enum StorageAnalysis {
         for (row, (title, detail)) in tally.artifactTitles.sorted(by: { $0.key < $1.key }) {
             add(row, title, detail, .developer, size: tally.rowSize[row] ?? 0)
         }
-        for (id, name, detail, category) in [("code", "Projects and code", "Your code folders, without the build output listed under Developer", StorageCategory.documents),
-                                             ("otherfiles", "Other folders in your home", "", .documents),
-                                             ("homefiles", "Files in your home folder", "", .documents),
-                                             ("hidden", "Hidden folders in your home", "Settings and data tools keep in dot folders", .system)] {
+        for (id, name, detail, category) in [("code", L("Projects and code"), L("Your code folders, without the build output listed under Developer"), StorageCategory.documents),
+                                             ("otherfiles", L("Other folders in your home"), "", .documents),
+                                             ("homefiles", L("Files in your home folder"), "", .documents),
+                                             ("hidden", L("Hidden folders in your home"), L("Settings and data tools keep in dot folders"), .system)] {
             if let size = tally.rowSize[id], size > 0 { add(id, name, detail, category, size: size) }
         }
 
         // What macOS lumps into System Data and Wisp can put a number on without a scan.
         var systemFixed: [StorageRow] = []
-        if let size = volume.systemVolume { systemFixed.append(row("macos", "macOS", "The sealed system volume. Updates replace it as a whole", size)) }
+        if let size = volume.systemVolume { systemFixed.append(row("macos", "macOS", L("The sealed system volume. Updates replace it as a whole"), size)) }
         let preboot = (volume.preboot ?? 0) + (volume.update ?? 0) + volume.otherSystemVolumes
-        if preboot > 0 { systemFixed.append(row("preboot", "Startup and update files", "What the Mac needs to start up and to install updates", preboot)) }
+        if preboot > 0 { systemFixed.append(row("preboot", L("Startup and update files"), L("What the Mac needs to start up and to install updates"), preboot)) }
         if let vm = volume.vm {
-            let note = input.swap.map { "Memory moved out to disk, \(Format.bytes($0.used)) of \(Format.bytes($0.total)) in use now" }
-                ?? "Memory moved out to disk"
-            systemFixed.append(row("vm", "Swap and sleep image", note, vm))
+            let note = input.swap.map { L("Memory moved out to disk, \(Format.bytes($0.used)) of \(Format.bytes($0.total)) in use now") }
+                ?? L("Memory moved out to disk")
+            systemFixed.append(row("vm", L("Swap and sleep image"), note, vm))
         }
         rows.insert(contentsOf: systemFixed, at: 0)
         let systemRows = rows.filter { $0.category == .system }
@@ -183,8 +183,8 @@ public enum StorageAnalysis {
         if system > explained {
             let detail = tally.locked.isEmpty
                 ? "Folders only an administrator can read, other accounts on this Mac and space APFS keeps for itself"
-                : "Folders Wisp could not read, folders only an administrator can read and other accounts on this Mac"
-            rows.append(row("unmeasured", "Not measured", detail, system - explained))
+                : L("Folders Wisp could not read, folders only an administrator can read and other accounts on this Mac")
+            rows.append(row("unmeasured", L("Not measured"), detail, system - explained))
         }
 
         return StorageSummary(date: input.now, volume: volume, segments: segments, rows: rows,
@@ -292,22 +292,22 @@ public enum StorageAnalysis {
         let developerCaches = Set(StorageCatalog.developer.flatMap(\.paths).filter { $0.hasPrefix("Library/Caches/") }
             .map { String($0.dropFirst("Library/Caches/".count)) })
         let caches = entries("Library/Caches", minimum: 50 << 20) { name in developerCaches.contains(name) || name.hasPrefix("com.apple.") }
-        items.append(ReclaimItem(id: "caches", name: "App caches", detail: "Apps make these again", consequence: "Apps make their caches again as needed. Quit an app before clearing its cache",
+        items.append(ReclaimItem(id: "caches", name: L("App caches"), detail: L("Apps make these again"), consequence: L("Apps make their caches again as needed. Quit an app before clearing its cache"),
                                  entries: caches))
-        items.append(ReclaimItem(id: "backups", name: "Old device backups", detail: "Not updated in 90 days", consequence: "These iPhone and iPad backups have not been updated in 90 days",
+        items.append(ReclaimItem(id: "backups", name: L("Old device backups"), detail: L("Not updated in 90 days"), consequence: L("These iPhone and iPad backups have not been updated in 90 days"),
                                  entries: entries("Library/Application Support/MobileSync/Backup", minimum: 1 << 20, olderThan: cutoff)))
-        items.append(ReclaimItem(id: "deriveddata", name: "Xcode DerivedData", detail: "Xcode builds it again", consequence: "Xcode makes it again; the next build of each project takes longer",
+        items.append(ReclaimItem(id: "deriveddata", name: L("Xcode DerivedData"), detail: L("Xcode builds it again"), consequence: L("Xcode makes it again; the next build of each project takes longer"),
                                  entries: whole("Library/Developer/Xcode/DerivedData", minimum: 10 << 20)))
-        items.append(ReclaimItem(id: "archives", name: "Old Xcode archives", detail: "Older than 90 days",
-                                 consequence: "Their debug symbols go too, so crash reports from those builds can no longer be read",
+        items.append(ReclaimItem(id: "archives", name: L("Old Xcode archives"), detail: L("Older than 90 days"),
+                                 consequence: L("Their debug symbols go too, so crash reports from those builds can no longer be read"),
                                  entries: entries("Library/Developer/Xcode/Archives", minimum: 1 << 20, olderThan: cutoff)))
-        items.append(ReclaimItem(id: "simulators", name: "Unused simulators", detail: "Not used in 90 days", consequence: "Each simulator goes with the apps and data in it",
+        items.append(ReclaimItem(id: "simulators", name: L("Unused simulators"), detail: L("Not used in 90 days"), consequence: L("Each simulator goes with the apps and data in it"),
                                  entries: entries("Library/Developer/CoreSimulator/Devices", minimum: 10 << 20, olderThan: cutoff,
                                                   name: { path, node in input.deviceName(path) ?? node.name })))
-        items.append(ReclaimItem(id: "homebrew", name: "Homebrew downloads", detail: "brew fetches them again", consequence: "brew downloads them again when it needs them",
+        items.append(ReclaimItem(id: "homebrew", name: L("Homebrew downloads"), detail: L("brew fetches them again"), consequence: L("brew downloads them again when it needs them"),
                                  entries: whole("Library/Caches/Homebrew", minimum: 10 << 20)))
-        items.append(ReclaimItem(id: "node_modules", name: "Old node_modules", detail: "Projects untouched for 90 days",
-                                 consequence: "npm install brings them back when you return to a project",
+        items.append(ReclaimItem(id: "node_modules", name: L("Old node_modules"), detail: L("Projects untouched for 90 days"),
+                                 consequence: L("npm install brings them back when you return to a project"),
                                  entries: tally.staleModules.filter { $0.size >= 1 << 20 }.sorted { $0.size > $1.size }))
         return items.filter { !$0.entries.isEmpty }
     }

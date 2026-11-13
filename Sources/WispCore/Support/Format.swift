@@ -26,7 +26,7 @@ public enum Format {
     }
 
     public static func bytes(_ value: Double) -> String {
-        let units = ["B", "KB", "MB", "GB", "TB"]
+        let units = ["B", "KB", "MB", L("GB"), "TB"]
         var amount = value
         var unit = 0
         while amount >= 1000, unit < units.count - 1 {
@@ -43,7 +43,7 @@ public enum Format {
     }
 
     public static func memory(_ value: Double) -> String {
-        let units = ["B", "KB", "MB", "GB", "TB"]
+        let units = ["B", "KB", "MB", L("GB"), "TB"]
         var amount = value
         var unit = 0
         while amount >= 1024, unit < units.count - 1 {
@@ -81,7 +81,7 @@ public enum Format {
     }
 
     public static func minutes(_ minutes: Double) -> String {
-        minutes == 1 ? "a minute" : "\(Int(minutes)) minutes"
+        minutes == 1 ? L("a minute") : L("\(Int(minutes)) minutes")
     }
 
     public static func watts(_ watts: Double) -> String {
@@ -91,9 +91,9 @@ public enum Format {
     public static func duration(_ seconds: Double) -> String {
         let s = Int(seconds)
         if s < 60 { return "\(s)s" }
-        if s < 3600 { return "\(s / 60)m \(s % 60)s" }
-        if s < 86400 { return "\(s / 3600)h \(s % 3600 / 60)m" }
-        return "\(s / 86400)d \(s % 86400 / 3600)h"
+        if s < 3600 { return L("\(s / 60)m \(s % 60)s") }
+        if s < 86400 { return L("\(s / 3600)h \(s % 3600 / 60)m") }
+        return L("\(s / 86400)d \(s % 86400 / 3600)h")
     }
 
     public static func celsius(_ value: Double) -> String {

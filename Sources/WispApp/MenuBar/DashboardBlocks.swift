@@ -4,36 +4,36 @@ import WispCore
 extension DashboardBlock {
     var title: String {
         switch self {
-        case .cpu: return "CPU"
-        case .meters: return "Meters"
-        case .cores: return "Cores"
-        case .memory: return "Memory"
-        case .gpu: return "GPU"
-        case .power: return "Power"
-        case .network: return "Network"
-        case .disk: return "Disk"
-        case .sensors: return "Temperature"
-        case .apps: return "Apps"
-        case .agents: return "Coding agents"
-        case .why: return "Why is it slow?"
+        case .cpu: return L("CPU")
+        case .meters: return L("Meters")
+        case .cores: return L("Cores")
+        case .memory: return L("Memory")
+        case .gpu: return L("GPU")
+        case .power: return L("Power")
+        case .network: return L("Network")
+        case .disk: return L("Disk")
+        case .sensors: return L("Temperature")
+        case .apps: return L("Apps")
+        case .agents: return L("Coding agents")
+        case .why: return L("Why is it slow?")
         }
     }
 
     /// One line for the builder's palette.
     var detail: String {
         switch self {
-        case .cpu: return "Usage and the last few minutes"
-        case .meters: return "Six small readings in a grid"
-        case .cores: return "Each core over time"
-        case .memory: return "Used, pressure and by kind"
-        case .gpu: return "Usage and its line"
-        case .power: return "Watts and the battery"
-        case .network: return "Down and up"
-        case .disk: return "Free space and activity"
-        case .sensors: return "Hottest sensor and fans"
-        case .apps: return "The busiest apps, by tab"
-        case .agents: return "Coding agents running now"
-        case .why: return "A three-second check when the Mac drags"
+        case .cpu: return L("Usage and the last few minutes")
+        case .meters: return L("Six small readings in a grid")
+        case .cores: return L("Each core over time")
+        case .memory: return L("Used, pressure and by kind")
+        case .gpu: return L("Usage and its line")
+        case .power: return L("Watts and the battery")
+        case .network: return L("Down and up")
+        case .disk: return L("Free space and activity")
+        case .sensors: return L("Hottest sensor and fans")
+        case .apps: return L("The busiest apps, by tab")
+        case .agents: return L("Coding agents running now")
+        case .why: return L("A three-second check when the Mac drags")
         }
     }
 
@@ -155,15 +155,15 @@ final class CPUBlock: DashboardBlockView {
     override func update(_ s: SystemSnapshot, history: HistoryStore) {
         guard let c = s.cpu else { return }
         figure.set(c.total)
-        state.text = c.total >= 0.85 ? "Strained" : (c.total >= 0.6 ? "Busy" : "Normal")
+        state.text = c.total >= 0.85 ? L("Strained") : (c.total >= 0.6 ? L("Busy") : L("Normal"))
         state.tone = c.total >= 0.85 ? .bad : (c.total >= 0.6 ? .warn : .good)
-        facts.items = [.init(label: "User", value: Format.percent(c.user), dot: nil),
-                       .init(label: "System", value: Format.percent(c.system), dot: nil),
-                       .init(label: "Load", value: String(format: "%.1f", c.loadAverage.first ?? 0), dot: nil)]
+        facts.items = [.init(label: L("User"), value: Format.percent(c.user), dot: nil),
+                       .init(label: L("System"), value: Format.percent(c.system), dot: nil),
+                       .init(label: L("Load"), value: String(format: "%.1f", c.loadAverage.first ?? 0), dot: nil)]
         let minutes = Int((Double(HistoryStore.recentSamples) * max(delegate.settings.interval, 1) / 60).rounded())
         context.text = Theme.caption(c.performanceCores > 0
-            ? "\(c.cores.count) cores (\(c.performanceCores)P + \(c.efficiencyCores)E) · last \(minutes) min"
-            : "\(c.cores.count) cores · last \(minutes) min")
+            ? L("\(c.cores.count) cores (\(c.performanceCores)P + \(c.efficiencyCores)E) · last \(minutes) min")
+            : L("\(c.cores.count) cores · last \(minutes) min"))
         chart.values = history.recent(.cpu)
         needsLayout = true
     }
@@ -180,7 +180,7 @@ final class MetersBlock: DashboardBlockView {
         super.init(block, delegate: delegate)
         header.isHidden = true
         meters.forEach(addSubview)
-        for (meter, caption) in zip(meters, ["Memory", "GPU", "Power", "Network", "Disk", "Battery"]) { meter.caption = caption }
+        for (meter, caption) in zip(meters, [L("Memory"), L("GPU"), L("Power"), L("Network"), L("Disk"), L("Battery")]) { meter.caption = caption }
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -224,15 +224,15 @@ final class MetersBlock: DashboardBlockView {
             let rate = d.readBytesPerSecond + d.writeBytesPerSecond
             let peak = Double(zip(history.recent(.diskRead), history.recent(.diskWrite)).map { $0 + $1 }.filter { !$0.isNaN }.max() ?? 0)
             let (value, unit) = DashboardView.split(Format.rate(rate))
-            meters[4].caption = Strain.disk(d) ? "Disk · low space" : "Disk"
+            meters[4].caption = Strain.disk(d) ? L("Disk · low space") : L("Disk")
             meters[4].set(value: value, unit: unit, fraction: rate / max(peak, 1), color: Strain.disk(d) ? Theme.bad : PageID.disk.tint)
         }
         if let b = s.battery {
-            meters[5].caption = b.isCharging ? "Charging" : (b.isPluggedIn ? "Battery" : "On battery")
+            meters[5].caption = b.isCharging ? L("Charging") : (b.isPluggedIn ? L("Battery") : L("On battery"))
             meters[5].set(value: String(format: "%.0f", b.percent), unit: "%", fraction: b.percent / 100,
                           color: Strain.battery(b) ? Theme.bad : Theme.green)
         } else if let t = s.thermal?.cpuCelsius {
-            meters[5].caption = "Temperature"
+            meters[5].caption = L("Temperature")
             meters[5].set(value: Format.temperature(t).0, unit: Format.temperature(t).1, fraction: t / 110,
                           color: Strain.temperature(s.thermal) ? Theme.bad : PageID.sensors.tint)
         }
@@ -245,7 +245,7 @@ final class MetersBlock: DashboardBlockView {
 final class CoresBlock: DashboardBlockView {
     private let meta = TextLine()
     let heatmap = Heatmap()
-    private let hint = TextLine(Theme.caption("Hover a core", size: 9.5))
+    private let hint = TextLine(Theme.caption(L("Hover a core"), size: 9.5))
     private let key = HeatKey()
     private var rowCount = 0
     var onHover: (((Int, Int, NSRect)?) -> Void)?
@@ -279,7 +279,7 @@ final class CoresBlock: DashboardBlockView {
         guard let c = s.cpu else { return }
         let busy = c.cores.filter { $0 >= 0.8 }.count
         meta.text = Theme.caption(c.performanceCores > 0
-            ? "\(c.performanceCores)P + \(c.efficiencyCores)E · \(busy) busy" : "\(c.cores.count) cores · \(busy) busy")
+            ? L("\(c.performanceCores)P + \(c.efficiencyCores)E · \(busy) busy") : L("\(c.cores.count) cores · \(busy) busy"))
         let cores = history.cores()
         guard !cores.isEmpty else { return }
         // The kernel lists efficiency cores first; show performance cores on top.
@@ -333,17 +333,17 @@ final class MemoryBlock: DashboardBlockView {
         guard let m = s.memory else { return }
         figure.format = { value in
             let (number, unit) = DashboardView.split(Format.memory(value))
-            return (number, unit + " of " + Format.memory(m.total).replacingOccurrences(of: " GB", with: ""))
+            return (number, unit + L(" of ") + Format.memory(m.total).replacingOccurrences(of: " GB", with: ""))
         }
         figure.set(Double(m.used))
-        state.text = m.pressure == .normal ? "Normal" : (m.pressure == .warning ? "Pressure: Warning" : "Pressure: Critical")
+        state.text = m.pressure == .normal ? L("Normal") : (m.pressure == .warning ? L("Pressure: Warning") : L("Pressure: Critical"))
         state.tone = m.pressure == .normal ? .good : (m.pressure == .warning ? .warn : .bad)
-        context.text = Theme.caption("Swap \(Format.memory(m.swapUsed)) · \(Format.memory(m.free + m.cached)) available")
+        context.text = Theme.caption(L("Swap \(Format.memory(m.swapUsed)) · \(Format.memory(m.free + m.cached)) available"))
         let total = Double(max(m.total, 1))
         let compressed = Theme.indigo.withAlphaComponent(0.45)
         bar.parts = [(Double(m.app) / total, Theme.indigo), (Double(m.wired) / total, Theme.orange), (Double(m.compressed) / total, compressed)]
-        legend.rows = [(Theme.indigo, "App", Format.memory(m.app)), (Theme.orange, "Wired", Format.memory(m.wired)),
-                       (compressed, "Compressed", Format.memory(m.compressed))]
+        legend.rows = [(Theme.indigo, L("App"), Format.memory(m.app)), (Theme.orange, L("Wired"), Format.memory(m.wired)),
+                       (compressed, L("Compressed"), Format.memory(m.compressed))]
         needsLayout = true
     }
 }
@@ -386,7 +386,7 @@ final class CompactBlock: DashboardBlockView {
         case .disk:
             figure.format = { value in
                 let (number, unit) = DashboardView.split(Format.bytes(UInt64(max(0, value))))
-                return (number, unit + " free")
+                return (number, unit + L(" free"))
             }
             line.isHidden = true
         default:
@@ -416,52 +416,52 @@ final class CompactBlock: DashboardBlockView {
         case .gpu:
             guard let g = s.gpu else { return }
             figure.set(g.utilization)
-            context.text = Theme.caption([g.coreCount.map { "\($0)-core GPU" }, g.memoryUsed.map { Format.memory($0) }]
+            context.text = Theme.caption([g.coreCount.map { L("\($0)-core GPU") }, g.memoryUsed.map { Format.memory($0) }]
                 .compactMap { $0 }.joined(separator: " · "))
             line.values = history.recent(.gpu)
         case .network:
             guard let n = s.network else { return }
             figure.set(n.receivedBytesPerSecond)
-            context.text = Theme.caption("Down · \(Format.rate(n.sentBytesPerSecond)) up")
+            context.text = Theme.caption(L("Down · \(Format.rate(n.sentBytesPerSecond)) up"))
             line.values = zip(history.recent(.networkIn), history.recent(.networkOut)).map { $0 + $1 }
         case .power:
             if let p = s.power, let cpuWatts = p.cpu {
                 figure.set(cpuWatts + (p.gpu ?? 0) + (p.ane ?? 0))
-                context.text = Theme.caption("CPU \(Format.watts(cpuWatts)) · GPU \(Format.watts(p.gpu ?? 0))")
+                context.text = Theme.caption(L("CPU \(Format.watts(cpuWatts)) · GPU \(Format.watts(p.gpu ?? 0))"))
             }
             var items: [Facts.Item] = []
             if let b = s.battery {
-                items.append(.init(label: b.isCharging ? "Charging" : (b.isPluggedIn ? "Battery" : "On battery"),
+                items.append(.init(label: b.isCharging ? L("Charging") : (b.isPluggedIn ? L("Battery") : L("On battery")),
                                    value: String(format: "%.0f%%", b.percent), dot: Strain.battery(b) ? Theme.bad : nil))
                 if let minutes = b.minutesRemaining, minutes > 0, !b.isPluggedIn {
-                    items.append(.init(label: "Left", value: Format.duration(Double(minutes) * 60), dot: nil))
+                    items.append(.init(label: L("Left"), value: Format.duration(Double(minutes) * 60), dot: nil))
                 }
-                if let health = b.health { items.append(.init(label: "Health", value: String(format: "%.0f%%", health * 100), dot: nil)) }
+                if let health = b.health { items.append(.init(label: L("Health"), value: String(format: "%.0f%%", health * 100), dot: nil)) }
             } else if let ane = s.power?.ane {
-                items.append(.init(label: "Neural Engine", value: Format.watts(ane), dot: nil))
+                items.append(.init(label: L("Neural Engine"), value: Format.watts(ane), dot: nil))
             }
             facts.items = items
         case .disk:
             guard let d = s.disk else { return }
             figure.set(Double(d.volumeFree))
             state.isHidden = !Strain.disk(d)
-            state.text = "Low space"
+            state.text = L("Low space")
             state.tone = .bad
-            context.text = Theme.caption("\(Format.bytes(d.volumeTotal - d.volumeFree)) of \(Format.bytes(d.volumeTotal)) used")
-            facts.items = [.init(label: "Reading", value: Format.rate(d.readBytesPerSecond), dot: nil),
-                           .init(label: "Writing", value: Format.rate(d.writeBytesPerSecond), dot: nil)]
+            context.text = Theme.caption(L("\(Format.bytes(d.volumeTotal - d.volumeFree)) of \(Format.bytes(d.volumeTotal)) used"))
+            facts.items = [.init(label: L("Reading"), value: Format.rate(d.readBytesPerSecond), dot: nil),
+                           .init(label: L("Writing"), value: Format.rate(d.writeBytesPerSecond), dot: nil)]
             bar.parts = [(1 - Double(d.volumeFree) / Double(max(d.volumeTotal, 1)), Strain.disk(d) ? Theme.red : block.tint)]
         default:
             guard let t = s.thermal else { return }
             figure.set(t.cpuCelsius)
             state.isHidden = t.pressure == .nominal
-            state.text = t.pressure.rawValue.prefix(1).uppercased() + t.pressure.rawValue.dropFirst()
+            state.text = L10n.string(t.pressure.rawValue)
             state.tone = t.pressure == .fair ? .warn : .bad
-            context.text = Theme.caption("Hottest CPU sensor")
+            context.text = Theme.caption(L("Hottest CPU sensor"))
             var items: [Facts.Item] = t.fans.prefix(2).enumerated().map {
-                .init(label: t.fans.count > 1 ? "Fan \($0.offset + 1)" : "Fan", value: "\(Int($0.element.rpm)) rpm", dot: nil)
+                .init(label: t.fans.count > 1 ? L("Fan \($0.offset + 1)") : L("Fan"), value: L("\(Int($0.element.rpm)) rpm"), dot: nil)
             }
-            if let gpu = t.gpuCelsius { items.insert(.init(label: "GPU", value: Format.temperature(gpu).0 + Format.temperature(gpu).1, dot: nil), at: 0) }
+            if let gpu = t.gpuCelsius { items.insert(.init(label: L("GPU"), value: Format.temperature(gpu).0 + Format.temperature(gpu).1, dot: nil), at: 0) }
             facts.items = items
         }
         needsLayout = true
@@ -472,7 +472,7 @@ final class CompactBlock: DashboardBlockView {
 
 /// The busiest apps by CPU, memory, power or network.
 final class AppsBlock: DashboardBlockView {
-    let tabs = Segmented(["CPU", "Memory", "Power", "Net"])
+    let tabs = Segmented([L("CPU"), L("Memory"), L("Power"), L("Net")])
     private let meta = TextLine()
     private let rows = (0..<5).map { _ in ListRow() }
     private let note = TextLine()
@@ -486,11 +486,11 @@ final class AppsBlock: DashboardBlockView {
         rows.forEach(addSubview)
         rows.last?.showsRule = false
         note.alignment = .center
-        note.text = NSAttributedString(string: "Per-app network is measured while a Wisp window shows it.",
+        note.text = NSAttributedString(string: L("Per-app network is measured while a Wisp window shows it."),
                                        attributes: [.font: Theme.sans(12), .foregroundColor: Theme.inkSecondary])
-        noteButton.title = "Also measure in the background"
+        noteButton.title = L("Also measure in the background")
         noteButton.onPress = { [weak self] in self?.delegate.change { $0.trackAppNetwork = true } }
-        noteButton.setAccessibilityHelp("Turns on Settings, General, Track network per app in the background")
+        noteButton.setAccessibilityHelp(L("Turns on Settings, General, Track network per app in the background"))
         tabs.onChange = { [weak self] _ in
             guard let self, let table = self.last else { return }
             self.update(table)
@@ -529,7 +529,7 @@ final class AppsBlock: DashboardBlockView {
     override func update(_ table: ProcessTable) {
         last = table
         let tab = tabs.selected
-        meta.text = Theme.caption("\(table.apps.count) apps · \(table.processes.count) processes")
+        meta.text = Theme.caption(L("\(table.apps.count) apps · \(table.processes.count) processes"))
         if tab == 3, !table.networkMeasured {
             showNote(true)
             return
@@ -555,7 +555,7 @@ final class AppsBlock: DashboardBlockView {
             row.isHidden = false
             row.icon = Icons.icon(for: app)
             row.name = app.name
-            row.note = app.processCount > 1 ? "\(app.processCount) procs" : ""
+            row.note = app.processCount > 1 ? L("\(app.processCount) procs") : ""
             row.fraction = key(app) / peak
             row.barColor = [PageID.cpu.tint, PageID.memory.tint, PageID.energy.tint, PageID.network.tint][tab]
             switch tab {
@@ -575,7 +575,7 @@ final class AppsBlock: DashboardBlockView {
 /// Coding agents running now, one line per kind.
 final class AgentsBlock: DashboardBlockView {
     private let count = TextLine()
-    private let empty = TextLine(Theme.caption("None running"))
+    private let empty = TextLine(Theme.caption(L("None running")))
     private var lines: [AgentLine] = []
     private let finder = AgentFinder()
     private var checkedAt = Date.distantPast
@@ -622,7 +622,7 @@ final class AgentsBlock: DashboardBlockView {
             line.showsRule = index < grouped.count - 1
         }
         empty.isHidden = !grouped.isEmpty
-        count.text = Theme.caption(found.isEmpty ? "" : "\(found.count) running")
+        count.text = Theme.caption(found.isEmpty ? "" : L("\(found.count) running"))
         if grouped.count != shown {
             shown = grouped.count
             onResize?()

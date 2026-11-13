@@ -158,8 +158,8 @@ class MachinePage: CardPage {
 // MARK: - CPU
 
 final class CPUPage: MachinePage {
-    private let user = Tile("User"), system = Tile("System"), load = Tile("Load average")
-    private let temperature = Tile("Temperature"), processes = Tile("Processes"), busiest = Tile("Busiest app")
+    private let user = Tile(L("User")), system = Tile(L("System")), load = Tile(L("Load average"))
+    private let temperature = Tile(L("Temperature")), processes = Tile(L("Processes")), busiest = Tile(L("Busiest app"))
     private let coresCard = CardView()
     private let coresTitle = TextLine()
     private let coresMeta = TextLine()
@@ -184,9 +184,9 @@ final class CPUPage: MachinePage {
         heatmap.labelWidth = 34
         for view in [coresTitle, coresMeta, heatmap, heatKey] as [NSView] { coresCard.addSubview(view) }
         extras = [(coresCard, 60 + 14 * 14 + 40)]
-        table.columns = [.init(title: "App", width: 0), .init(title: "CPU", width: 150, bar: true),
-                         .init(title: "Memory", width: 80), .init(title: "Power", width: 70), .init(title: "Processes", width: 70)]
-        tableTitle.text = cardTitle("Apps", "by CPU")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("CPU"), width: 150, bar: true),
+                         .init(title: L("Memory"), width: 80), .init(title: L("Power"), width: 70), .init(title: L("Processes"), width: 70)]
+        tableTitle.text = cardTitle(L("Apps"), L("by CPU"))
     }
 
     override func arrange(width: CGFloat) -> CGFloat {
@@ -202,9 +202,9 @@ final class CPUPage: MachinePage {
     override func updateHero(_ s: SystemSnapshot) {
         guard let c = s.cpu else { return }
         hero.figure.set(c.total)
-        hero.state.text = c.total >= 0.85 ? "Strained" : (c.total >= 0.6 ? "Busy" : "Normal")
+        hero.state.text = c.total >= 0.85 ? L("Strained") : (c.total >= 0.6 ? L("Busy") : L("Normal"))
         hero.state.tone = c.total >= 0.85 ? .bad : (c.total >= 0.6 ? .warn : .good)
-        hero.meta.text = Theme.caption("\(c.performanceCores) performance and \(c.efficiencyCores) efficiency cores")
+        hero.meta.text = Theme.caption(L("\(c.performanceCores) performance and \(c.efficiencyCores) efficiency cores"))
         hero.needsLayout = true
 
         let history = delegate.monitor.history.cores()
@@ -213,34 +213,34 @@ final class CPUPage: MachinePage {
         for (number, index) in (efficiency..<history.count).enumerated() { rows.append(.init(label: "P\(number + 1)", tag: "", values: history[index])) }
         for index in 0..<efficiency { rows.append(.init(label: "E\(index + 1)", tag: "", values: history[index])) }
         heatmap.rows = rows
-        coresTitle.text = cardTitle("Cores", "\(c.cores.count)")
+        coresTitle.text = cardTitle(L("Cores"), "\(c.cores.count)")
         let busy = c.cores.filter { $0 >= 0.8 }.count
-        coresMeta.text = Theme.caption("Last \(Int(Double(HistoryStore.recentCoreSamples) * delegate.settings.interval)) s · \(busy) busy now")
+        coresMeta.text = Theme.caption(L("Last \(Int(Double(HistoryStore.recentCoreSamples) * delegate.settings.interval)) s · \(busy) busy now"))
     }
 
     override func updateTiles(_ s: SystemSnapshot) {
         guard let c = s.cpu else { return }
         user.figure.set(c.user)
         user.meter.fraction = c.user
-        user.set(note: "Your apps")
+        user.set(note: L("Your apps"))
         system.figure.set(c.system)
         system.meter.fraction = c.system
         system.set(note: "macOS")
         load.figure.set(c.loadAverage.first ?? 0)
-        load.set(note: c.loadAverage.count == 3 ? String(format: "5 min %.1f · 15 min %.1f", c.loadAverage[1], c.loadAverage[2]) : "")
+        load.set(note: c.loadAverage.count == 3 ? String(format: L("5 min %.1f · 15 min %.1f"), c.loadAverage[1], c.loadAverage[2]) : "")
         if let t = s.thermal, let celsius = t.cpuCelsius {
             temperature.set(text: Format.temperature(celsius).0, unit: Format.temperature(celsius).1)
-            temperature.set(note: t.fans.isEmpty ? "No fans" : "Fans " + t.fans.map { "\(Int($0.rpm))" }.joined(separator: ", ") + " rpm")
+            temperature.set(note: t.fans.isEmpty ? L("No fans") : L("Fans ") + t.fans.map { "\(Int($0.rpm))" }.joined(separator: ", ") + L(" rpm"))
         }
     }
 
     override func updateApps(_ table: ProcessTable) {
         processes.set(text: "\(table.processes.count)")
-        processes.set(note: "In \(table.apps.count) apps")
+        processes.set(note: L("In \(table.apps.count) apps"))
         if let app = busiest(table, by: { $0.cpu }) {
             busiestID = app.id
             busiest.set(text: app.name)
-            busiest.set(note: appCPU(app, table) + " · \(app.processCount) processes")
+            busiest.set(note: appCPU(app, table) + L(" · \(app.processCount) processes"))
         }
     }
 
@@ -261,8 +261,8 @@ final class CPUPage: MachinePage {
 // MARK: - Memory
 
 final class MemoryPage: MachinePage {
-    private let pressure = Tile("Pressure"), available = Tile("Available"), swapTile = Tile("Swap used")
-    private let compressed = Tile("Compressed"), largest = Tile("Largest app")
+    private let pressure = Tile(L("Pressure")), available = Tile(L("Available")), swapTile = Tile(L("Swap used"))
+    private let compressed = Tile(L("Compressed")), largest = Tile(L("Largest app"))
     private let typesCard = CardView()
     private let typesTitle = TextLine()
     private let waffle = Waffle()
@@ -279,13 +279,13 @@ final class MemoryPage: MachinePage {
         waffle.cell = 9
         waffle.gap = 3
         for view in [typesTitle, waffle, legend] as [NSView] { typesCard.addSubview(view) }
-        typesTitle.text = cardTitle("By kind", "")
+        typesTitle.text = cardTitle(L("By kind"), "")
         waffle.onHover = { [weak self] hover in self?.legend.highlighted = hover?.0 }
         legend.onHover = { [weak self] index in self?.waffle.highlighted = index }
         extras = [(typesCard, 190)]
-        table.columns = [.init(title: "App", width: 0), .init(title: "Memory", width: 160, bar: true),
-                         .init(title: "CPU", width: 70), .init(title: "Processes", width: 70)]
-        tableTitle.text = cardTitle("Apps", "by memory")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("Memory"), width: 160, bar: true),
+                         .init(title: L("CPU"), width: 70), .init(title: L("Processes"), width: 70)]
+        tableTitle.text = cardTitle(L("Apps"), L("by memory"))
     }
 
     override var barColumnValue: (AppGroup) -> Double { { Double($0.memory) } }
@@ -303,14 +303,14 @@ final class MemoryPage: MachinePage {
         guard let m = s.memory else { return }
         hero.figure.set(Double(m.used))
         hero.chart.ceiling = Float(m.total)
-        let level = m.pressure == .normal ? "Normal" : (m.pressure == .warning ? "Warning" : "Critical")
+        let level = m.pressure == .normal ? L("Normal") : (m.pressure == .warning ? L("Warning") : L("Critical"))
         hero.state.text = level
         hero.state.tone = m.pressure == .normal ? .good : (m.pressure == .warning ? .warn : .bad)
-        hero.meta.text = Theme.caption("Used of \(Format.memory(m.total)) · \(Format.percent(m.usedFraction))")
+        hero.meta.text = Theme.caption(L("Used of \(Format.memory(m.total)) · \(Format.percent(m.usedFraction))"))
         hero.needsLayout = true
         let parts: [(String, UInt64, NSColor)] = [
-            ("App", m.app, Theme.indigo), ("Wired", m.wired, Theme.orange), ("Compressed", m.compressed, Theme.indigo.withAlphaComponent(0.45)),
-            ("Cached", m.cached, Theme.teal), ("Free", m.free, Theme.track),
+            (L("App"), m.app, Theme.indigo), (L("Wired"), m.wired, Theme.orange), (L("Compressed"), m.compressed, Theme.indigo.withAlphaComponent(0.45)),
+            (L("Cached"), m.cached, Theme.teal), (L("Free"), m.free, Theme.track),
         ]
         waffle.parts = parts.map { .init(name: $0.0, value: Double($0.1), color: $0.2) }
         legend.items = parts.map {
@@ -320,28 +320,28 @@ final class MemoryPage: MachinePage {
 
     override func updateTiles(_ s: SystemSnapshot) {
         guard let m = s.memory else { return }
-        let level = m.pressure == .normal ? "Normal" : (m.pressure == .warning ? "Warning" : "Critical")
+        let level = m.pressure == .normal ? L("Normal") : (m.pressure == .warning ? L("Warning") : L("Critical"))
         pressure.set(text: level)
         pressure.figure.color = m.pressure == .normal ? Theme.good : (m.pressure == .warning ? Theme.warn : Theme.bad)
-        pressure.set(note: m.pressure == .normal ? "Plenty to spare" : "Apps are being squeezed")
+        pressure.set(note: m.pressure == .normal ? L("Plenty to spare") : L("Apps are being squeezed"))
         let free = m.total > m.used ? m.total - m.used : 0
         let (value, unit) = DashboardView.split(Format.memory(free))
         available.set(text: value, unit: unit)
         available.meter.fraction = Double(free) / Double(max(m.total, 1))
-        available.set(note: "Free or reclaimable")
+        available.set(note: L("Free or reclaimable"))
         let (swapValue, swapUnit) = DashboardView.split(Format.memory(m.swapUsed))
         swapTile.set(text: swapValue, unit: swapUnit)
-        swapTile.set(note: "Moved out to disk")
+        swapTile.set(note: L("Moved out to disk"))
         let (compressedValue, compressedUnit) = DashboardView.split(Format.memory(m.compressed))
         compressed.set(text: compressedValue, unit: compressedUnit)
-        compressed.set(note: "Squeezed in place")
+        compressed.set(note: L("Squeezed in place"))
     }
 
     override func updateApps(_ table: ProcessTable) {
         if let app = busiest(table, by: { Double($0.memory) }) {
             largestID = app.id
             largest.set(text: app.name)
-            largest.set(note: Format.memory(app.memory) + " · \(app.processCount) processes")
+            largest.set(note: Format.memory(app.memory) + L(" · \(app.processCount) processes"))
         }
     }
 
@@ -361,8 +361,8 @@ final class MemoryPage: MachinePage {
 // MARK: - Disk
 
 class DiskPage: MachinePage {
-    private let reading = Tile("Reading"), writing = Tile("Writing"), readToday = Tile("Read today")
-    private let writtenToday = Tile("Written today"), writer = Tile("Busiest writer")
+    private let reading = Tile(L("Reading")), writing = Tile(L("Writing")), readToday = Tile(L("Read today"))
+    private let writtenToday = Tile(L("Written today")), writer = Tile(L("Busiest writer"))
     private let volumesCard = CardView()
     private let volumesTitle = TextLine()
     private var volumeRows: [ListRow] = []
@@ -372,16 +372,16 @@ class DiskPage: MachinePage {
     override func setUp() {
         secondMetric = .diskWrite
         hero.chart.format = { Format.rate(Double($0)) }
-        hero.chart.names = ("Read", "Write")
+        hero.chart.names = (L("Read"), L("Write"))
         hero.figure.format = { DashboardView.split(Format.bytes(UInt64(max(0, $0)))) }
         writer.onClick = { [weak self] in if let id = self?.writerID { self?.onSelect(.app(id)) } }
         tiles = [reading, writing, readToday, writtenToday, writer]
         volumesCard.addSubview(volumesTitle)
-        volumesTitle.text = cardTitle("Volumes", "")
+        volumesTitle.text = cardTitle(L("Volumes"), "")
         extras = [(volumesCard, 120)]
-        table.columns = [.init(title: "App", width: 0), .init(title: "Write", width: 150, bar: true), .init(title: "Read", width: 80),
-                         .init(title: "CPU", width: 70), .init(title: "Memory", width: 80)]
-        tableTitle.text = cardTitle("Apps", "by disk writes")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("Write"), width: 150, bar: true), .init(title: L("Read"), width: 80),
+                         .init(title: L("CPU"), width: 70), .init(title: L("Memory"), width: 80)]
+        tableTitle.text = cardTitle(L("Apps"), L("by disk writes"))
     }
 
     override var barColumnValue: (AppGroup) -> Double { { $0.diskWritePerSecond } }
@@ -398,12 +398,12 @@ class DiskPage: MachinePage {
         if Date().timeIntervalSince(volumesCheckedAt) > 30 { refreshVolumes() }
         guard let d = s.disk else { return }
         hero.figure.set(Double(d.volumeFree))
-        hero.meta.text = Theme.caption("Free on the startup disk of \(Format.bytes(d.volumeTotal)) · read \(Format.rate(d.readBytesPerSecond)) · write \(Format.rate(d.writeBytesPerSecond))")
+        hero.meta.text = Theme.caption(L("Free on the startup disk of \(Format.bytes(d.volumeTotal)) · read \(Format.rate(d.readBytesPerSecond)) · write \(Format.rate(d.writeBytesPerSecond))"))
         hero.state.isHidden = !Strain.disk(d)
-        hero.state.text = "Low space"
+        hero.state.text = L("Low space")
         hero.state.tone = .bad
         hero.chart.secondaryColor = PageID.cpu.tint
-        hero.legend.text = legendText(("Read", pageTint), ("Write", PageID.cpu.tint))
+        hero.legend.text = legendText((L("Read"), pageTint), (L("Write"), PageID.cpu.tint))
         hero.needsLayout = true
     }
 
@@ -421,7 +421,7 @@ class DiskPage: MachinePage {
             row.isHidden = false
             row.icon = NSWorkspace.shared.icon(forFile: volume.path)
             row.name = volume.name
-            row.note = "\(Format.bytes(volume.free)) free of \(Format.bytes(volume.total))"
+            row.note = L("\(Format.bytes(volume.free)) free of \(Format.bytes(volume.total))")
             row.value = Format.percent(volume.usedFraction)
             row.fraction = volume.usedFraction
             row.barColor = volume.isInternal && volume.usedFraction > 0.95 ? Theme.bad : Theme.series[1]
@@ -438,25 +438,25 @@ class DiskPage: MachinePage {
         guard let d = s.disk else { return }
         let (r, ru) = DashboardView.split(Format.rate(d.readBytesPerSecond))
         reading.set(text: r, unit: ru)
-        reading.set(note: "Right now")
+        reading.set(note: L("Right now"))
         let (w, wu) = DashboardView.split(Format.rate(d.writeBytesPerSecond))
         writing.set(text: w, unit: wu)
-        writing.set(note: "Right now")
+        writing.set(note: L("Right now"))
         let midnight = Calendar.current.startOfDay(for: Date())
         let history = delegate.monitor.history
         let (rt, rtu) = DashboardView.split(Format.bytes(UInt64(history.total(.diskRead, since: midnight))))
         readToday.set(text: rt, unit: rtu)
-        readToday.set(note: "Since midnight")
+        readToday.set(note: L("Since midnight"))
         let (wt, wtu) = DashboardView.split(Format.bytes(UInt64(history.total(.diskWrite, since: midnight))))
         writtenToday.set(text: wt, unit: wtu)
-        writtenToday.set(note: "Since midnight")
+        writtenToday.set(note: L("Since midnight"))
     }
 
     override func updateApps(_ table: ProcessTable) {
         if let app = busiest(table, by: { $0.diskWritePerSecond }), app.diskWritePerSecond > 0 {
             writerID = app.id
             writer.set(text: app.name)
-            writer.set(note: Format.rate(app.diskWritePerSecond) + " · \(app.processCount) processes")
+            writer.set(note: Format.rate(app.diskWritePerSecond) + L(" · \(app.processCount) processes"))
         }
     }
 
@@ -478,8 +478,8 @@ class DiskPage: MachinePage {
 // MARK: - Network
 
 final class NetworkPage: MachinePage {
-    private let downToday = Tile("Downloaded today"), upToday = Tile("Uploaded today")
-    private let week = Tile("Last 7 days"), month = Tile("Last 30 days"), busiestTile = Tile("Busiest app")
+    private let downToday = Tile(L("Downloaded today")), upToday = Tile(L("Uploaded today"))
+    private let week = Tile(L("Last 7 days")), month = Tile(L("Last 30 days")), busiestTile = Tile(L("Busiest app"))
     private var busiestID: String?
     private var totalsAt = Date.distantPast
     private lazy var cards = NetworkCards(page: self)
@@ -490,14 +490,14 @@ final class NetworkPage: MachinePage {
         metric = .networkIn
         secondMetric = .networkOut
         hero.chart.format = { Format.rate(Double($0)) }
-        hero.chart.names = ("Down", "Up")
+        hero.chart.names = (L("Down"), L("Up"))
         hero.figure.format = { DashboardView.split(Format.rate($0)) }
         busiestTile.onClick = { [weak self] in if let id = self?.busiestID { self?.onSelect(.app(id)) } }
         tiles = [downToday, upToday, week, month, busiestTile]
         extras = cards.extras
-        table.columns = [.init(title: "App", width: 0), .init(title: "Download", width: 150, bar: true), .init(title: "Upload", width: 80),
-                         .init(title: "CPU", width: 70), .init(title: "Memory", width: 80)]
-        tableTitle.text = cardTitle("Apps", "by download")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("Download"), width: 150, bar: true), .init(title: L("Upload"), width: 80),
+                         .init(title: L("CPU"), width: 70), .init(title: L("Memory"), width: 80)]
+        tableTitle.text = cardTitle(L("Apps"), L("by download"))
     }
 
     override var barColumnValue: (AppGroup) -> Double { { $0.networkInPerSecond } }
@@ -505,9 +505,9 @@ final class NetworkPage: MachinePage {
     override func updateHero(_ s: SystemSnapshot) {
         guard let n = s.network else { return }
         hero.figure.set(n.receivedBytesPerSecond)
-        hero.meta.text = Theme.caption("Download · upload \(Format.rate(n.sentBytesPerSecond))")
+        hero.meta.text = Theme.caption(L("Download · upload \(Format.rate(n.sentBytesPerSecond))"))
         hero.chart.secondaryColor = PageID.cpu.tint
-        hero.legend.text = legendText(("Down", pageTint), ("Up", PageID.cpu.tint))
+        hero.legend.text = legendText((L("Down"), pageTint), (L("Up"), PageID.cpu.tint))
         hero.needsLayout = true
     }
 
@@ -518,8 +518,8 @@ final class NetworkPage: MachinePage {
         let history = delegate.monitor.history
         let midnight = Calendar.current.startOfDay(for: Date())
         let down = history.total(.networkIn, since: midnight), up = history.total(.networkOut, since: midnight)
-        set(downToday, Format.bytes(UInt64(down)), "Since midnight")
-        set(upToday, Format.bytes(UInt64(up)), "Since midnight")
+        set(downToday, Format.bytes(UInt64(down)), L("Since midnight"))
+        set(upToday, Format.bytes(UInt64(up)), L("Since midnight"))
         let weekStart = Date().addingTimeInterval(-7 * 86_400), monthStart = Date().addingTimeInterval(-30 * 86_400)
         let weekDown = history.total(.networkIn, since: weekStart), weekUp = history.total(.networkOut, since: weekStart)
         set(week, Format.bytes(UInt64(weekDown + weekUp)), "↓ \(Format.bytes(UInt64(weekDown))) · ↑ \(Format.bytes(UInt64(weekUp)))")
@@ -541,7 +541,7 @@ final class NetworkPage: MachinePage {
             busiestTile.set(note: "↓ \(Format.rate(app.networkInPerSecond)) · ↑ \(Format.rate(app.networkOutPerSecond))")
         } else if !table.networkMeasured {
             busiestTile.set(text: "–")
-            busiestTile.set(note: "Per-app traffic is off")
+            busiestTile.set(note: L("Per-app traffic is off"))
         }
     }
 
@@ -565,8 +565,8 @@ final class NetworkPage: MachinePage {
 // MARK: - GPU
 
 final class GPUPage: MachinePage {
-    private let memoryTile = Tile("GPU memory"), average = Tile("Average"), peak = Tile("Peak")
-    private let temperature = Tile("Temperature"), power = Tile("GPU power")
+    private let memoryTile = Tile(L("GPU memory")), average = Tile(L("Average")), peak = Tile(L("Peak"))
+    private let temperature = Tile(L("Temperature")), power = Tile(L("GPU power"))
     /// GPU time per app, read from the driver only while this page is on screen.
     private let clients = GPUClients()
     private var gpuShare: [String: Double] = [:]
@@ -577,15 +577,15 @@ final class GPUPage: MachinePage {
         hero.figure.format = { (String(format: "%.0f", $0 * 100), "%") }
         for tile in [average, peak] { tile.figure.format = { (String(format: "%.0f", $0 * 100), "%") }; tile.showsMeter = true }
         tiles = [memoryTile, average, peak, temperature, power]
-        table.columns = [.init(title: "App", width: 0), .init(title: "GPU", width: 150, bar: true), .init(title: "CPU", width: 80),
-                         .init(title: "Memory", width: 80), .init(title: "Processes", width: 70)]
-        tableTitle.text = cardTitle("Apps", "by GPU time")
+        table.columns = [.init(title: L("App"), width: 0), .init(title: L("GPU"), width: 150, bar: true), .init(title: L("CPU"), width: 80),
+                         .init(title: L("Memory"), width: 80), .init(title: L("Processes"), width: 70)]
+        tableTitle.text = cardTitle(L("Apps"), L("by GPU time"))
     }
 
     override func updateHero(_ s: SystemSnapshot) {
         guard let g = s.gpu else { return }
         hero.figure.set(g.utilization)
-        hero.meta.text = Theme.caption(g.name + (g.coreCount.map { " · \($0) cores" } ?? ""))
+        hero.meta.text = Theme.caption(g.name + (g.coreCount.map { L(" · \($0) cores") } ?? ""))
         hero.needsLayout = true
     }
 
@@ -593,26 +593,26 @@ final class GPUPage: MachinePage {
         if let used = s.gpu?.memoryUsed {
             let (value, unit) = DashboardView.split(Format.memory(used))
             memoryTile.set(text: value, unit: unit)
-            memoryTile.set(note: "In use")
+            memoryTile.set(note: L("In use"))
         }
         let values = hero.chart.primary.filter { !$0.isNaN }
         if !values.isEmpty {
             let mean = Double(values.reduce(0, +)) / Double(values.count)
             average.figure.set(mean)
             average.meter.fraction = mean
-            average.set(note: "In the chart above")
+            average.set(note: L("In the chart above"))
             let top = Double(values.max() ?? 0)
             peak.figure.set(top)
             peak.meter.fraction = top
-            peak.set(note: "In the chart above")
+            peak.set(note: L("In the chart above"))
         }
         if let celsius = s.thermal?.gpuCelsius {
             temperature.set(text: Format.temperature(celsius).0, unit: Format.temperature(celsius).1)
-            temperature.set(note: "Hottest GPU sensor")
+            temperature.set(note: L("Hottest GPU sensor"))
         }
         if let watts = s.power?.gpu {
             power.set(text: String(format: "%.1f", watts), unit: "W")
-            power.set(note: "Right now")
+            power.set(note: L("Right now"))
         }
     }
 

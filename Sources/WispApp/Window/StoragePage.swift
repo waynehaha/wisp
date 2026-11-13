@@ -27,17 +27,17 @@ final class StoragePage: DiskPage {
 
     private let barCard = CardView(), barTitle = TextLine(), barFigure = TextLine(), barStatus = TextLine()
     private let bar = DiskBar(), legend = DiskLegend(), tooltip = Tooltip()
-    private lazy var rescanButton = SymbolButton(symbol: "arrow.clockwise", label: "Measure again", target: self, action: #selector(rescan))
+    private lazy var rescanButton = SymbolButton(symbol: "arrow.clockwise", label: L("Measure again"), target: self, action: #selector(rescan))
     private let accessNote = TextLine()
     private lazy var accessButton: ActionButton = {
-        let button = ActionButton(title: "Open Privacy Settings", target: self, action: #selector(openAccessSettings))
+        let button = ActionButton(title: L("Open Privacy Settings"), target: self, action: #selector(openAccessSettings))
         button.secondary = true
         return button
     }()
 
     private let detailCard = CardView(), crumbs = Breadcrumb(), detailNote = TextLine(), list = StorageList()
     private lazy var revealButton: ActionButton = {
-        let button = ActionButton(title: "Reveal in Finder", target: self, action: #selector(revealCurrent))
+        let button = ActionButton(title: L("Reveal in Finder"), target: self, action: #selector(revealCurrent))
         button.secondary = true
         return button
     }()
@@ -50,11 +50,11 @@ final class StoragePage: DiskPage {
     private var history: (values: [Double], marks: [SpaceChart.Mark], grew: [SpaceHistory.Growth], since: Date?)?
 
     private let healthCard = CardView(), healthTitle = TextLine(), healthNote = TextLine()
-    private let wear = FigureTile("Life used", symbol: "gauge.with.dots.needle.33percent", tint: PageID.disk.tint, big: false)
-    private let written = FigureTile("Written", symbol: "arrow.up.doc.fill", tint: PageID.disk.tint, big: false)
-    private let temperature = FigureTile("Temperature", symbol: "thermometer.medium", tint: PageID.disk.tint, big: false)
-    private let spare = FigureTile("Spare blocks", symbol: "square.stack.3d.up.fill", tint: PageID.disk.tint, big: false)
-    private let poweredOn = FigureTile("Powered on", symbol: "clock.fill", tint: PageID.disk.tint, big: false)
+    private let wear = FigureTile(L("Life used"), symbol: "gauge.with.dots.needle.33percent", tint: PageID.disk.tint, big: false)
+    private let written = FigureTile(L("Written"), symbol: "arrow.up.doc.fill", tint: PageID.disk.tint, big: false)
+    private let temperature = FigureTile(L("Temperature"), symbol: "thermometer.medium", tint: PageID.disk.tint, big: false)
+    private let spare = FigureTile(L("Spare blocks"), symbol: "square.stack.3d.up.fill", tint: PageID.disk.tint, big: false)
+    private let poweredOn = FigureTile(L("Powered on"), symbol: "clock.fill", tint: PageID.disk.tint, big: false)
 
     private var storageViews: [NSView] { [barCard, detailCard, reclaimCard, historyCard, healthCard] }
 
@@ -66,25 +66,25 @@ final class StoragePage: DiskPage {
         super.setUp()
         for view in storageViews { canvas.addSubview(view) }
         for view in [barTitle, barFigure, barStatus, rescanButton, bar, legend, accessNote, accessButton] as [NSView] { barCard.addSubview(view) }
-        barTitle.text = title("Startup disk", symbol: "internaldrive.fill")
+        barTitle.text = title(L("Startup disk"), symbol: "internaldrive.fill")
         bar.onPick = { [weak self] category in self?.pick(category) }
         legend.onPick = { [weak self] category in self?.pick(category) }
         bar.onHover = { [weak self] category, rect in self?.hover(category, rect) }
-        accessNote.text = Theme.caption("Some folders stay locked until Wisp has Full Disk Access", size: 11)
+        accessNote.text = Theme.caption(L("Some folders stay locked until Wisp has Full Disk Access"), size: 11)
 
         for view in [crumbs, detailNote, list, revealButton] as [NSView] { detailCard.addSubview(view) }
         crumbs.onPick = { [weak self] index in self?.goBack(to: index) }
         list.onOpen = { [weak self] row in self?.open(row) }
 
         for view in [reclaimTitle, reclaimNote, reclaimList] as [NSView] { reclaimCard.addSubview(view) }
-        reclaimTitle.text = title("Could go to the Trash", symbol: "trash.fill")
+        reclaimTitle.text = title(L("Could go to the Trash"), symbol: "trash.fill")
 
         for view in [historyTitle, chart, grewTitle, grewList] as [NSView] { historyCard.addSubview(view) }
-        historyTitle.text = title("Where your space went", symbol: "chart.line.downtrend.xyaxis", detail: "Free space, last 30 days")
+        historyTitle.text = title(L("Where your space went"), symbol: "chart.line.downtrend.xyaxis", detail: L("Free space, last 30 days"))
         chart.tint = PageID.disk.tint
 
         for view in [healthTitle, healthNote, wear, written, temperature, spare, poweredOn] as [NSView] { healthCard.addSubview(view) }
-        healthTitle.text = title("Drive health", symbol: "heart.fill")
+        healthTitle.text = title(L("Drive health"), symbol: "heart.fill")
         healthCard.isHidden = true
 
         // Lists can be long; only the part on screen is drawn.
@@ -146,10 +146,10 @@ final class StoragePage: DiskPage {
         let volume = summary.volume
         let figure = NSMutableAttributedString(string: Format.bytes(volume.available),
                                                attributes: [.font: Theme.figure(28, .regular), .foregroundColor: Theme.ink])
-        figure.append(NSAttributedString(string: "  free of \(Format.bytes(volume.capacity))",
+        figure.append(NSAttributedString(string: L("  free of \(Format.bytes(volume.capacity))"),
                                          attributes: [.font: Theme.sans(15), .foregroundColor: Theme.inkSecondary]))
         if volume.purgeable > 0 {
-            figure.append(NSAttributedString(string: " · \(Format.bytes(volume.availableForImportant)) once macOS clears purgeable space",
+            figure.append(NSAttributedString(string: L(" · \(Format.bytes(volume.availableForImportant)) once macOS clears purgeable space"),
                                              attributes: [.font: Theme.sans(13), .foregroundColor: Theme.inkTertiary]))
         }
         barFigure.text = figure
@@ -160,10 +160,10 @@ final class StoragePage: DiskPage {
         legend.items = summary.segments.map { segment in
             let value: String
             switch segment.category {
-            case .snapshots: value = summary.snapshots.isEmpty ? "None" : "\(summary.snapshots.count) · size not reported"
+            case .snapshots: value = summary.snapshots.isEmpty ? L("None") : L("\(summary.snapshots.count) · size not reported")
             case .free, .purgeable: value = Format.bytes(segment.size)
-            case .mail where !summary.fullDiskAccess && segment.size == 0: value = "Locked"
-            default: value = scanned ? Format.bytes(segment.size) : "Measuring"
+            case .mail where !summary.fullDiskAccess && segment.size == 0: value = L("Locked")
+            default: value = scanned ? Format.bytes(segment.size) : L("Measuring")
             }
             return DiskLegend.Item(category: segment.category, value: value)
         }
@@ -181,9 +181,9 @@ final class StoragePage: DiskPage {
     private func updateStatus() {
         var text = ""
         if let scanning = state.scanning {
-            text = "Measuring \(displayName(scanning))…"
+            text = L("Measuring \(displayName(scanning))…")
         } else if let date = state.scannedAt {
-            text = "Measured " + Self.ago(date)
+            text = L("Measured ") + Self.ago(date)
         }
         if let notice { text = notice }
         barStatus.text = Theme.caption(text, size: 11)
@@ -200,8 +200,8 @@ final class StoragePage: DiskPage {
         tooltip.title = category.title
         let share = summary.volume.capacity > 0 ? Double(segment.size) / Double(summary.volume.capacity) : 0
         tooltip.detail = category == .snapshots ? "" : Format.percent(share)
-        tooltip.lines = [Tooltip.Line(color: nil, name: category == .snapshots ? "\(summary.snapshots.count) local snapshots" : "Size",
-                                      value: category == .snapshots ? "Not reported" : Format.bytes(segment.size))]
+        tooltip.lines = [Tooltip.Line(color: nil, name: category == .snapshots ? L("\(summary.snapshots.count) local snapshots") : L("Size"),
+                                      value: category == .snapshots ? L("Not reported") : Format.bytes(segment.size))]
         tooltip.show(in: barCard, above: bar.convert(rect, to: barCard))
     }
 
@@ -254,7 +254,7 @@ final class StoragePage: DiskPage {
 
     private func name(_ level: Level) -> String {
         switch level {
-        case .mac: return "This Mac"
+        case .mac: return L("This Mac")
         case .folder(let path): return displayName(path)
         case .category(let category): return category.title
         case .row(let id): return state.summary?.row(id)?.name ?? id
@@ -262,10 +262,10 @@ final class StoragePage: DiskPage {
     }
 
     private func displayName(_ path: String) -> String {
-        if path == home { return "Home" }
-        if path == "/Library" { return "Library (shared)" }
+        if path == home { return L("Home") }
+        if path == "/Library" { return L("Library (shared)") }
         if path == "/opt/homebrew" { return "Homebrew" }
-        if path.hasPrefix("/private/var/folders/"), path.split(separator: "/").count == 5 { return "Temporary files" }
+        if path.hasPrefix("/private/var/folders/"), path.split(separator: "/").count == 5 { return L("Temporary files") }
         return (path as NSString).lastPathComponent
     }
 
@@ -285,7 +285,7 @@ final class StoragePage: DiskPage {
         revealButton.isHidden = true
         switch stack.last ?? .mac {
         case .mac:
-            note = "Folders Wisp measures on the startup disk"
+            note = L("Folders Wisp measures on the startup disk")
             for (path, node) in state.roots.sorted(by: { $0.value.size > $1.value.size }) {
                 rows.append(.init(id: path, name: displayName(path), note: path.replacingOccurrences(of: home, with: "~"),
                                   value: Format.bytes(node.size), fraction: 0, symbol: path == home ? "house.fill" : "folder.fill",
@@ -305,7 +305,7 @@ final class StoragePage: DiskPage {
                 let project = ((path as NSString).deletingLastPathComponent as NSString).lastPathComponent
                 let isArtifact = ["node_modules", "target", "venv", "build"].contains(id)
                 rows.append(.init(id: path, name: isArtifact ? project : displayName(path),
-                                  note: path.replacingOccurrences(of: home, with: "~") + (found.map { $0.modified > 0 ? " · changed " + Self.ago(Date(timeIntervalSince1970: $0.modified)) : "" } ?? ""),
+                                  note: path.replacingOccurrences(of: home, with: "~") + (found.map { $0.modified > 0 ? L(" · changed ") + Self.ago(Date(timeIntervalSince1970: $0.modified)) : "" } ?? ""),
                                   value: found.map { Format.bytes($0.size) } ?? "–", fraction: 0, symbol: "folder.fill", tint: row.category.color,
                                   opens: true, path: path))
             }
@@ -322,7 +322,7 @@ final class StoragePage: DiskPage {
         if !expanded, rows.count > Self.shortList + 2 {
             let hidden = rows.count - Self.shortList
             rows = Array(rows.prefix(Self.shortList))
-            rows.append(.init(id: "#more", name: "Show \(hidden) more", note: "", value: "", fraction: 0, symbol: "ellipsis.circle",
+            rows.append(.init(id: "#more", name: L("Show \(hidden) more"), note: "", value: "", fraction: 0, symbol: "ellipsis.circle",
                               tint: Theme.inkSecondary, opens: true, faint: true, bar: false))
         }
         list.rows = rows
@@ -331,7 +331,7 @@ final class StoragePage: DiskPage {
 
     private func folderRows(_ path: String, note: inout String) -> [StorageList.Row] {
         guard let folder = node(path) else {
-            note = "Measuring…"
+            note = L("Measuring…")
             // Only a folder the finished tree folded away gets a scan of its own; a root still
             // waiting for the main scan is left to it.
             let root = state.roots.keys.first { path.hasPrefix($0 + "/") }
@@ -339,37 +339,37 @@ final class StoragePage: DiskPage {
             return []
         }
         if folder.locked {
-            note = state.summary?.fullDiskAccess == false ? "Locked until Wisp has Full Disk Access" : "macOS does not let Wisp read this folder"
+            note = state.summary?.fullDiskAccess == false ? L("Locked until Wisp has Full Disk Access") : L("macOS does not let Wisp read this folder")
             return []
         }
         // A folder whose smaller subfolders were folded together gets a scan of its own, if it is not huge.
         if onDemand[path] == nil, folder.otherCount > 0, folder.files < 200_000, state.scanning == nil { measure(path) }
-        note = "\(Format.bytes(folder.size)) · \(Format.count(Int(folder.files))) files"
-            + (folder.modified > 0 ? " · changed " + Self.ago(Date(timeIntervalSince1970: folder.modified)) : "")
+        note = L("\(Format.bytes(folder.size)) · \(Format.count(Int(folder.files))) files")
+            + (folder.modified > 0 ? L(" · changed ") + Self.ago(Date(timeIntervalSince1970: folder.modified)) : "")
         let peak = Double(folder.children.first?.size ?? 1)
         var rows = folder.children.prefix(60).map { child -> StorageList.Row in
             let childPath = path + "/" + child.name
-            let changed = child.modified > 0 ? "changed " + Self.ago(Date(timeIntervalSince1970: child.modified)) : ""
+            let changed = child.modified > 0 ? L("changed ") + Self.ago(Date(timeIntervalSince1970: child.modified)) : ""
             if child.locked {
-                return .init(id: childPath, name: child.name, note: state.summary?.fullDiskAccess == false ? "Needs Full Disk Access" : "Cannot be read",
+                return .init(id: childPath, name: child.name, note: state.summary?.fullDiskAccess == false ? L("Needs Full Disk Access") : L("Cannot be read"),
                              value: "–", fraction: 0, symbol: "lock.fill", tint: Theme.inkTertiary, opens: false, faint: true, bar: false, path: childPath)
             }
             let opens = !child.isFile && (!child.children.isEmpty || child.otherCount > 0)
-            let files = child.isFile ? "" : "\(Format.count(Int(child.files))) files"
+            let files = child.isFile ? "" : L("\(Format.count(Int(child.files))) files")
             return .init(id: childPath, name: child.name, note: [files, changed].filter { !$0.isEmpty }.joined(separator: " · "),
                          value: Format.bytes(child.size), fraction: Double(child.size) / max(peak, 1),
                          symbol: child.isFile ? "doc.fill" : (child.name.hasSuffix(".app") ? "app.fill" : "folder.fill"), tint: pageTint,
                          opens: opens, path: childPath)
         }
         if folder.otherSize > 0 {
-            rows.append(.init(id: path + "/#other", name: "\(folder.otherCount) smaller folders", note: "Each too small to list",
+            rows.append(.init(id: path + "/#other", name: L("\(folder.otherCount) smaller folders"), note: L("Each too small to list"),
                               value: Format.bytes(folder.otherSize), fraction: 0, symbol: "folder", tint: Theme.inkTertiary, opens: false, faint: true,
                               bar: false))
         }
         let listedFiles = folder.children.filter(\.isFile).reduce(UInt64(0)) { $0 + $1.size }
         let looseFiles = folder.ownFiles > listedFiles ? folder.ownFiles - listedFiles : 0
         if looseFiles > 0 {
-            rows.append(.init(id: path + "/#files", name: "Files in this folder", note: "", value: Format.bytes(looseFiles), fraction: 0,
+            rows.append(.init(id: path + "/#files", name: L("Files in this folder"), note: "", value: Format.bytes(looseFiles), fraction: 0,
                               symbol: "doc", tint: Theme.inkTertiary, opens: false, faint: true, bar: false))
         }
         return rows
@@ -413,10 +413,10 @@ final class StoragePage: DiskPage {
                       value: "–", fraction: 0, symbol: "clock.arrow.circlepath", tint: category.color, opens: false, bar: false)
             }
         case .purgeable:
-            return [.init(id: "purgeable", name: "Purgeable", note: "Local snapshots, and files iCloud and apps can fetch again",
+            return [.init(id: "purgeable", name: L("Purgeable"), note: L("Local snapshots, and files iCloud and apps can fetch again"),
                           value: Format.bytes(summary.volume.purgeable), fraction: 0, symbol: category.symbol, tint: category.color, opens: false, bar: false)]
         case .free:
-            return [.init(id: "free", name: "Free", note: "Ready for new files", value: Format.bytes(summary.volume.available), fraction: 0,
+            return [.init(id: "free", name: L("Free"), note: L("Ready for new files"), value: Format.bytes(summary.volume.available), fraction: 0,
                           symbol: category.symbol, tint: Theme.inkSecondary, opens: false, bar: false)]
         default:
             var rows = summary.rows(category)
@@ -425,10 +425,10 @@ final class StoragePage: DiskPage {
             let peak = Double(rows.compactMap(\.size).max() ?? 1)
             return rows.map { row in
                 var note = row.detail
-                if row.count > 1, ["node_modules", "target", "venv", "build"].contains(row.id) { note = "In \(row.count) projects · " + note }
-                if let last = row.lastUsed, category == .developer { note = "Changed \(Self.ago(last)) · " + note }
+                if row.count > 1, ["node_modules", "target", "venv", "build"].contains(row.id) { note = L("In \(row.count) projects · ") + note }
+                if let last = row.lastUsed, category == .developer { note = L("Changed \(Self.ago(last)) · ") + note }
                 let locked = row.locked && (row.size ?? 0) == 0
-                return .init(id: "row:" + row.id, name: row.name, note: locked ? "Needs Full Disk Access" : note,
+                return .init(id: "row:" + row.id, name: row.name, note: locked ? L("Needs Full Disk Access") : note,
                              value: locked ? "–" : Format.bytes(row.size ?? 0), fraction: Double(row.size ?? 0) / max(peak, 1),
                              symbol: locked ? "lock.fill" : category.symbol, tint: locked ? Theme.inkTertiary : category.color,
                              opens: !row.paths.isEmpty && !locked, faint: locked || row.id == "unmeasured", path: row.paths.count == 1 ? row.paths[0] : nil)
@@ -438,15 +438,15 @@ final class StoragePage: DiskPage {
 
     private func explanation(_ category: StorageCategory) -> String {
         switch category {
-        case .apps: return "Apps in Applications as they sit on disk; their data in Library counts under System Data"
-        case .developer: return "Build output, package caches, toolchains and virtual machine disks"
-        case .documents: return "Your folders, and iCloud Drive and cloud files kept on this Mac"
-        case .mail: return "Mail and Messages with their attachments"
-        case .system: return "Everything else: macOS, swap, caches, logs, app data and what Wisp cannot read"
+        case .apps: return L("Apps in Applications as they sit on disk; their data in Library counts under System Data")
+        case .developer: return L("Build output, package caches, toolchains and virtual machine disks")
+        case .documents: return L("Your folders, and iCloud Drive and cloud files kept on this Mac")
+        case .mail: return L("Mail and Messages with their attachments")
+        case .system: return L("Everything else: macOS, swap, caches, logs, app data and what Wisp cannot read")
         case .snapshots:
-            return "macOS does not report snapshot sizes without administrator rights; the space they hold counts as purgeable"
-        case .purgeable: return "Space macOS frees by itself when it runs low"
-        case .free: return "Space ready for new files"
+            return L("macOS does not report snapshot sizes without administrator rights; the space they hold counts as purgeable")
+        case .purgeable: return L("Space macOS frees by itself when it runs low")
+        case .free: return L("Space ready for new files")
         }
     }
 
@@ -462,16 +462,16 @@ final class StoragePage: DiskPage {
         let trash = summary.row("trash")
         let trashLocked = !summary.fullDiskAccess
         // A Trash under a megabyte is folded into the home folder's small folders.
-        let trashValue = trashLocked ? "–" : trash.map { Format.bytes($0.size ?? 0) } ?? (state.roots.isEmpty ? "–" : "Under 1 MB")
-        rows.append(.init(id: "trash", name: "Trash", note: trashLocked ? "Its size needs Full Disk Access" : "Empty it in Finder",
+        let trashValue = trashLocked ? "–" : trash.map { Format.bytes($0.size ?? 0) } ?? (state.roots.isEmpty ? "–" : L("Under 1 MB"))
+        rows.append(.init(id: "trash", name: L("Trash"), note: trashLocked ? L("Its size needs Full Disk Access") : L("Empty it in Finder"),
                           value: trashValue, fraction: 0, symbol: "trash.fill", tint: Theme.inkSecondary, opens: false, bar: false))
         reclaimList.rows = rows
         let total = reclaimItems.reduce(UInt64(0)) { $0 + $1.size }
-        reclaimNote.text = Theme.caption(state.roots.isEmpty ? "Appears once folders are measured"
-                                         : total > 0 ? "\(Format.bytes(total)) in all · each goes to the Trash after you check what it holds"
-                                         : "Nothing large found", size: 11)
+        reclaimNote.text = Theme.caption(state.roots.isEmpty ? L("Appears once folders are measured")
+                                         : total > 0 ? L("\(Format.bytes(total)) in all · each goes to the Trash after you check what it holds")
+                                         : L("Nothing large found"), size: 11)
         while reclaimButtons.count < rows.count {
-            let button = ActionButton(title: "Review…", target: self, action: #selector(review(_:)))
+            let button = ActionButton(title: L("Review…"), target: self, action: #selector(review(_:)))
             button.secondary = true
             reclaimCard.addSubview(button)
             reclaimButtons.append(button)
@@ -480,7 +480,7 @@ final class StoragePage: DiskPage {
             button.isHidden = index >= rows.count
             guard index < rows.count else { continue }
             let isTrash = rows[index].id == "trash"
-            button.title = isTrash ? "Open Trash" : "Review…"
+            button.title = isTrash ? L("Open Trash") : L("Review…")
             button.tag = isTrash ? -1 : index
             button.invalidateIntrinsicContentSize()
         }
@@ -497,8 +497,8 @@ final class StoragePage: DiskPage {
         guard !entries.isEmpty else { return }
         let total = entries.reduce(UInt64(0)) { $0 + $1.size }
         let alert = NSAlert()
-        alert.messageText = entries.count == 1 ? "Move \(entries[0].name) to the Trash?" : "Move \(entries.count) folders to the Trash?"
-        alert.informativeText = "\(Format.bytes(total)). \(item.consequence). You can put them back from the Trash until you empty it."
+        alert.messageText = entries.count == 1 ? L("Move \(entries[0].name) to the Trash?") : L("Move \(entries.count) folders to the Trash?")
+        alert.informativeText = L("\(Format.bytes(total)). \(item.consequence). You can put them back from the Trash until you empty it.")
         let lines = entries.map { "\(Format.bytes($0.size))   \($0.path.replacingOccurrences(of: home, with: "~"))" }
         let text = NSTextView(frame: NSRect(x: 0, y: 0, width: 440, height: 10))
         text.string = lines.joined(separator: "\n")
@@ -514,8 +514,8 @@ final class StoragePage: DiskPage {
         text.frame.size.width = 440
         text.sizeToFit()
         alert.accessoryView = accessory
-        alert.addButton(withTitle: "Move to Trash")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("Move to Trash"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
             let urls = entries.map { URL(fileURLWithPath: $0.path) }
@@ -523,7 +523,7 @@ final class StoragePage: DiskPage {
                 MainActor.assumeIsolated {
                     guard let self else { return }
                     let moved = entries.filter { entry in trashed.keys.contains { $0.path == entry.path } }.reduce(UInt64(0)) { $0 + $1.size }
-                    self.notice = error == nil ? "Moved \(Format.bytes(moved)) to the Trash" : "Some folders could not be moved"
+                    self.notice = error == nil ? L("Moved \(Format.bytes(moved)) to the Trash") : L("Some folders could not be moved")
                     self.updateStatus()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
                         self?.notice = nil
@@ -578,9 +578,9 @@ final class StoragePage: DiskPage {
         chart.values = history.values
         chart.marks = history.marks
         if let since = history.since, !history.grew.isEmpty {
-            grewTitle.text = Theme.caption("Grew most since \(since.formatted(date: .abbreviated, time: .omitted))", size: 11)
+            grewTitle.text = Theme.caption(L("Grew most since \(since.formatted(date: .abbreviated, time: .omitted))"), size: 11)
         } else {
-            grewTitle.text = Theme.caption(state.roots.isEmpty ? "" : "Growth shows here after the next day's scan", size: 11)
+            grewTitle.text = Theme.caption(state.roots.isEmpty ? "" : L("Growth shows here after the next day's scan"), size: 11)
         }
         let peak = Double(history.grew.map(\.delta).max() ?? 1)
         grewList.rows = history.grew.map { growth in
@@ -619,10 +619,10 @@ final class StoragePage: DiskPage {
         let color = health.criticalWarning != 0 ? Theme.bad : Theme.inkSecondary
         let left = 100 - min(100, health.percentUsed)
         healthNote.variants = health.criticalWarning != 0
-            ? [Theme.caption("The drive reports a warning. Back up this Mac", color: color, size: 11),
-               Theme.caption("The drive reports a warning", color: color, size: 11)]
-            : [Theme.caption("\(left)% of the drive's rated writes left · read from its SMART log", size: 11),
-               Theme.caption("\(left)% of rated writes left", size: 11)]
+            ? [Theme.caption(L("The drive reports a warning. Back up this Mac"), color: color, size: 11),
+               Theme.caption(L("The drive reports a warning"), color: color, size: 11)]
+            : [Theme.caption(L("\(left)% of the drive's rated writes left · read from its SMART log"), size: 11),
+               Theme.caption(L("\(left)% of rated writes left"), size: 11)]
     }
 
     // MARK: Layout
@@ -732,13 +732,13 @@ final class StoragePage: DiskPage {
 
     static func ago(_ date: Date, now: Date = Date()) -> String {
         let seconds = now.timeIntervalSince(date)
-        if seconds < 90 { return "just now" }
-        if seconds < 3600 { return "\(Int(seconds / 60)) min ago" }
-        if seconds < 86_400 { return "\(Int(seconds / 3600)) h ago" }
+        if seconds < 90 { return L("just now") }
+        if seconds < 3600 { return L("\(Int(seconds / 60)) min ago") }
+        if seconds < 86_400 { return L("\(Int(seconds / 3600)) h ago") }
         let days = Int(seconds / 86_400)
-        if days == 1 { return "yesterday" }
-        if days < 60 { return "\(days) days ago" }
-        if days < 730 { return "\(days / 30) months ago" }
-        return "\(days / 365) years ago"
+        if days == 1 { return L("yesterday") }
+        if days < 60 { return L("\(days) days ago") }
+        if days < 730 { return L("\(days / 30) months ago") }
+        return L("\(days / 365) years ago")
     }
 }

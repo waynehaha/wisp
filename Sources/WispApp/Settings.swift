@@ -6,14 +6,14 @@ enum MenuMetric: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .cpu: return "CPU"
-        case .memory: return "Memory"
-        case .network: return "Network"
-        case .gpu: return "GPU"
-        case .temperature: return "Temperature"
-        case .battery: return "Battery"
-        case .disk: return "Disk"
-        case .power: return "Power"
+        case .cpu: return L("CPU")
+        case .memory: return L("Memory")
+        case .network: return L("Network")
+        case .gpu: return L("GPU")
+        case .temperature: return L("Temperature")
+        case .battery: return L("Battery")
+        case .disk: return L("Disk")
+        case .power: return L("Power")
         }
     }
 
@@ -49,9 +49,9 @@ enum MenuStyle: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .number: return "Number"
-        case .graph: return "Graph"
-        case .both: return "Number and graph"
+        case .number: return L("Number")
+        case .graph: return L("Graph")
+        case .both: return L("Number and graph")
         }
     }
 }

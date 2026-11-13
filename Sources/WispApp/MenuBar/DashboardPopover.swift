@@ -215,20 +215,20 @@ final class DashboardView: DrawnView {
     // Header
     private let title = TextLine(Toolbar.title("Wisp"))
     private let chip = MachineChip()
-    private lazy var settingsButton = SymbolButton(symbol: "slider.horizontal.3", label: "Settings", target: self, action: #selector(openSettings))
-    private lazy var closeButton = SymbolButton(symbol: "xmark", label: "Close", target: self, action: #selector(closeDashboard))
+    private lazy var settingsButton = SymbolButton(symbol: "slider.horizontal.3", label: L("Settings"), target: self, action: #selector(openSettings))
+    private lazy var closeButton = SymbolButton(symbol: "xmark", label: L("Close"), target: self, action: #selector(closeDashboard))
 
     // Blocks
     private(set) var layout: [DashboardBlock] = []
     private var views: [DashboardBlock: DashboardBlockView] = [:]
-    private let emptyNote = TextLine(Theme.caption("No blocks yet. Add some in Settings, Menu Bar."), alignment: .center)
+    private let emptyNote = TextLine(Theme.caption(L("No blocks yet. Add some in Settings, Menu Bar.")), alignment: .center)
 
     // Footer, one view so it moves as one when blocks come and go.
     private let footer = DrawnView()
-    private lazy var moreButton = SymbolButton(symbol: "ellipsis", label: "More", target: self, action: #selector(showMore(_:)))
+    private lazy var moreButton = SymbolButton(symbol: "ellipsis", label: L("More"), target: self, action: #selector(showMore(_:)))
     private let footerRule = CardView()
     private let status = TextLine()
-    private lazy var openButton = ActionButton(title: "Open Wisp", target: self, action: #selector(openWindow))
+    private lazy var openButton = ActionButton(title: L("Open Wisp"), target: self, action: #selector(openWindow))
 
     private let tooltip = Tooltip()
     private var lastSystem: SystemSnapshot?
@@ -403,7 +403,7 @@ final class DashboardView: DrawnView {
         for block in layout { views[block]?.update(s, history: history) }
         let interval = delegate.settings.interval
         let live = NSMutableAttributedString(string: "● ", attributes: [.font: Theme.mono(9), .foregroundColor: Theme.good])
-        live.append(Theme.caption("Live · every \(interval.formatted()) s"))
+        live.append(Theme.caption(L("Live · every \(interval.formatted()) s")))
         status.text = live
     }
 
@@ -421,10 +421,10 @@ final class DashboardView: DrawnView {
         let index = values.count - 1 - column
         guard index >= 0 else { return hideTooltip() }
         let seconds = Double(column) * max(delegate.settings.interval, 1)
-        tooltip.title = "Core \(heatmap.rows[row].label)"
-        tooltip.detail = column == 0 ? "Now" : Format.duration(seconds) + " ago"
+        tooltip.title = L("Core \(heatmap.rows[row].label)")
+        tooltip.detail = column == 0 ? L("Now") : Format.duration(seconds) + L(" ago")
         tooltip.lines = [Tooltip.Line(color: Theme.heat(values[index], appearance: effectiveAppearance),
-                                      name: "Busy", value: String(format: "%.0f%%", values[index] * 100))]
+                                      name: L("Busy"), value: String(format: "%.0f%%", values[index] * 100))]
         tooltip.show(in: self, above: convert(rect, from: heatmap))
     }
 
@@ -438,10 +438,10 @@ final class DashboardView: DrawnView {
 
     @objc private func showMore(_ sender: NSButton) {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
-        menu.addItem(withTitle: "Customize Dashboard…", action: #selector(customize), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("Settings…"), action: #selector(openSettings), keyEquivalent: ",").target = self
+        menu.addItem(withTitle: L("Customize Dashboard…"), action: #selector(customize), keyEquivalent: "").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Wisp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: L("Quit Wisp"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
     }
 
@@ -515,7 +515,7 @@ final class MachineChip: DrawnView {
         var buffer = [CChar](repeating: 0, count: max(size, 1))
         sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
         let name = String(cString: buffer)
-        return name.isEmpty ? "This Mac" : name
+        return name.isEmpty ? L("This Mac") : name
     }()
     /// Installed memory; read once, so the header needs no memory sampling.
     private let memory = Format.memory(ProcessInfo.processInfo.physicalMemory)

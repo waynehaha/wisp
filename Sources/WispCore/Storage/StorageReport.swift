@@ -62,10 +62,10 @@ public struct StorageReport: Codable, Sendable {
             switch segment.category {
             case .snapshots:
                 return Slice(name: segment.category.title, bytes: nil,
-                             note: "\(summary.snapshots.count) local snapshots; macOS does not report their size without administrator rights, and the space they hold is part of purgeable")
+                             note: L("\(summary.snapshots.count) local snapshots; macOS does not report their size without administrator rights, and the space they hold is part of purgeable"))
             case .system:
                 return Slice(name: segment.category.title, bytes: scanned ? segment.size : nil,
-                             note: scanned ? "What is left once the other slices, purgeable and free space are counted" : "Open Storage in Wisp to measure folders")
+                             note: scanned ? "What is left once the other slices, purgeable and free space are counted" : L("Open Storage in Wisp to measure folders"))
             default:
                 return Slice(name: segment.category.title, bytes: scanned || [.purgeable, .free].contains(segment.category) ? segment.size : nil, note: nil)
             }
@@ -82,6 +82,6 @@ public struct StorageReport: Codable, Sendable {
                              health: health.map { Health(percentUsed: $0.percentUsed, availableSparePercent: $0.availableSpare, temperatureCelsius: $0.celsius,
                                                          bytesWritten: $0.bytesWritten, bytesRead: $0.bytesRead, powerOnHours: $0.powerOnHours) },
                              scannedAt: summary.scannedAt, fullDiskAccess: summary.fullDiskAccess,
-                             note: scanned ? nil : "Folder sizes appear after the Storage page in Wisp has scanned once")
+                             note: scanned ? nil : L("Folder sizes appear after the Storage page in Wisp has scanned once"))
     }
 }

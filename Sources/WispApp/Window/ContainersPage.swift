@@ -5,7 +5,7 @@ import WispCore
 /// what Docker keeps on disk, and every container with stop and restart.
 @MainActor
 final class ContainersPage: MachinePage {
-    private let cpuTile = Tile("CPU"), limitTile = Tile("Closest to its limit"), networkTile = Tile("Network"), portsTile = Tile("Published ports")
+    private let cpuTile = Tile(L("CPU")), limitTile = Tile(L("Closest to its limit")), networkTile = Tile(L("Network")), portsTile = Tile(L("Published ports"))
     private let diskCard = CardView()
     private let diskTitle = TextLine()
     private let diskTotal = TextLine()
@@ -21,26 +21,26 @@ final class ContainersPage: MachinePage {
     private var polling = false
 
     override func setUp() {
-        hero.range.items = ["Live"]
+        hero.range.items = [L("Live")]
         hero.chart.format = { Format.memory(Double($0)) }
-        hero.chart.names = ("Memory", "")
+        hero.chart.names = (L("Memory"), "")
         hero.figure.format = { DashboardView.split(Format.memory($0)) }
         limitTile.showsMeter = true
         tiles = [cpuTile, limitTile, networkTile, portsTile]
         for view in [diskTitle, diskTotal, diskWaffle, diskLegend] as [NSView] { diskCard.addSubview(view) }
-        diskTitle.text = cardTitle("Disk use", "")
-        diskTotal.text = Theme.caption("Adding it up…")
+        diskTitle.text = cardTitle(L("Disk use"), "")
+        diskTotal.text = Theme.caption(L("Adding it up…"))
         diskWaffle.cell = 8
         diskWaffle.gap = 3
         diskWaffle.onHover = { [weak self] hover in self?.diskLegend.highlighted = hover?.0 }
         diskLegend.onHover = { [weak self] index in self?.diskWaffle.highlighted = index }
         extras = [(diskCard, 176)]
-        table.columns = [.init(title: "Container", width: 0), .init(title: "Ports", width: 110, right: false),
-                         .init(title: "Status", width: 150, right: false), .init(title: "CPU", width: 120, bar: true),
-                         .init(title: "Memory", width: 80), .init(title: "Network", width: 80), .init(title: "Disk", width: 80)]
+        table.columns = [.init(title: L("Container"), width: 0), .init(title: L("Ports"), width: 110, right: false),
+                         .init(title: L("Status"), width: 150, right: false), .init(title: L("CPU"), width: 120, bar: true),
+                         .init(title: L("Memory"), width: 80), .init(title: L("Network"), width: 80), .init(title: L("Disk"), width: 80)]
         table.sortColumn = 4
         table.onSelect = { [weak self] id in self?.showActions(for: id) }
-        tableTitle.text = cardTitle("Containers", "")
+        tableTitle.text = cardTitle(L("Containers"), "")
     }
 
     override func arrange(width: CGFloat) -> CGFloat {
@@ -98,18 +98,18 @@ final class ContainersPage: MachinePage {
         refreshChart(force: false)
 
         guard let socket = status.socket else {
-            hero.figure.show("No engine")
-            hero.meta.text = Theme.caption("Wisp looks for Docker Desktop, OrbStack, Colima, Rancher Desktop and Lima")
+            hero.figure.show(L("No engine"))
+            hero.meta.text = Theme.caption(L("Wisp looks for Docker Desktop, OrbStack, Colima, Rancher Desktop and Lima"))
             table.rows = []
             relayout()
             return
         }
         hero.figure.set(Double(memory))
-        hero.meta.text = Theme.caption("\(running.count) container\(running.count == 1 ? "" : "s") in \(Docker.engineName(socket))")
+        hero.meta.text = Theme.caption(L("\(running.count) container\(running.count == 1 ? "" : L10n.pluralSuffix) in \(Docker.engineName(socket))"))
         hero.needsLayout = true
 
         cpuTile.set(text: String(format: "%.1f", cpu * 100), unit: "%")
-        cpuTile.set(note: running.max { ($0.cpu ?? 0) < ($1.cpu ?? 0) }.map { "Most in \($0.name)" } ?? "")
+        cpuTile.set(note: running.max { ($0.cpu ?? 0) < ($1.cpu ?? 0) }.map { L("Most in \($0.name)") } ?? "")
         let limited = running.compactMap { c -> (Container, Double)? in
             guard let used = c.memory, let limit = c.memoryLimit, limit > 0, limit < 1 << 50 else { return nil }
             return (c, Double(used) / Double(limit))
@@ -118,12 +118,12 @@ final class ContainersPage: MachinePage {
             limitTile.set(text: container.name)
             limitTile.meter.fraction = fraction
             limitTile.meter.color = fraction > 0.9 ? Theme.bad : (fraction > 0.75 ? Theme.warn : Theme.good)
-            limitTile.set(note: "\(Format.percent(fraction)) of \(Format.memory(container.memoryLimit ?? 0))")
+            limitTile.set(note: L("\(Format.percent(fraction)) of \(Format.memory(container.memoryLimit ?? 0))"))
         }
         let network = running.reduce(0) { $0 + ($1.networkRate ?? 0) }
         let (value, unit) = DashboardView.split(Format.rate(network))
         networkTile.set(text: value, unit: unit)
-        networkTile.set(note: "In and out")
+        networkTile.set(note: L("In and out"))
         let ports = Set(running.flatMap { $0.ports.compactMap { $0.split(separator: ":").first.map(String.init) } })
         portsTile.set(text: "\(ports.count)")
         portsTile.set(note: ports.sorted().prefix(5).joined(separator: " · "))
@@ -154,12 +154,12 @@ final class ContainersPage: MachinePage {
 
     private func show(_ use: DockerDiskUse?) {
         guard let use else {
-            diskTotal.text = Theme.caption("Not available")
+            diskTotal.text = Theme.caption(L("Not available"))
             return
         }
-        diskTotal.text = Theme.caption("\(Format.bytes(use.total)) total · \(Format.bytes(use.reclaimable)) reclaimable")
-        let parts: [(String, DockerDiskUse.Part, NSColor)] = [("Images", use.images, Theme.series[2]), ("Containers", use.containers, Theme.series[1]),
-                                                             ("Volumes", use.volumes, Theme.series[4]), ("Build cache", use.buildCache, Theme.series[5])]
+        diskTotal.text = Theme.caption(L("\(Format.bytes(use.total)) total · \(Format.bytes(use.reclaimable)) reclaimable"))
+        let parts: [(String, DockerDiskUse.Part, NSColor)] = [(L("Images"), use.images, Theme.series[2]), (L("Containers"), use.containers, Theme.series[1]),
+                                                             (L("Volumes"), use.volumes, Theme.series[4]), (L("Build cache"), use.buildCache, Theme.series[5])]
         diskWaffle.parts = parts.map { .init(name: $0.0, value: Double($0.1.size), color: $0.2) }
         diskLegend.items = parts.map {
             .init(name: $0.0, value: Format.bytes($0.1.size), share: "\($0.1.inUse)/\($0.1.count)", color: $0.2)
@@ -170,11 +170,11 @@ final class ContainersPage: MachinePage {
         guard let container = status.containers.first(where: { $0.id == id }) else { return }
         let menu = NSMenu()
         for port in container.ports.compactMap({ $0.split(separator: ":").first }) {
-            menu.addItem(ActionItem("Open http://localhost:\(port)") { NSWorkspace.shared.open(URL(string: "http://localhost:\(port)")!) })
+            menu.addItem(ActionItem(L("Open http://localhost:\(port)")) { NSWorkspace.shared.open(URL(string: "http://localhost:\(port)")!) })
         }
         if !menu.items.isEmpty { menu.addItem(.separator()) }
-        menu.addItem(ActionItem("Restart \(container.name)") { [weak self] in self?.run("restart", container) })
-        menu.addItem(ActionItem("Stop \(container.name)") { [weak self] in self?.run("stop", container) })
+        menu.addItem(ActionItem(L("Restart \(container.name)")) { [weak self] in self?.run("restart", container) })
+        menu.addItem(ActionItem(L("Stop \(container.name)")) { [weak self] in self?.run("stop", container) })
         let point = table.convert(view.window?.mouseLocationOutsideOfEventStream ?? .zero, from: nil)
         menu.popUp(positioning: nil, at: point, in: table)
     }

@@ -137,15 +137,15 @@ public enum SpikeFinder {
             guard let best, best.rise >= excess * 0.4 else { continue }
             var names = apps[best.index].name
             if let second, second.rise >= excess * 0.3, second.rise >= metric.minimumRise * 0.5 {
-                names += " and " + apps[second.index].name
+                names += L(" and ") + apps[second.index].name
             }
             let duration = Double(span.count) * step
             let when = time(end.addingTimeInterval(-Double(values.count - 1 - run.start) * step), calendar: calendar, locale: locale)
             let until = time(end.addingTimeInterval(-Double(values.count - 1 - run.end) * step + step), calendar: calendar, locale: locale)
             let app = apps[best.index]
-            let label = when + " · " + phrase(metric, names: names, plural: names.contains(" and "), mean: best.mean, top: best.top,
+            let label = when + " · " + phrase(metric, names: names, plural: names.contains(L(" and ")), mean: best.mean, top: best.top,
                                                duration: duration)
-            let detail = "\(when) to \(until) · \(app.name) \(figure(metric, best.mean, top: best.top)) · " +
+            let detail = L("\(when) to \(until) · \(app.name) \(figure(metric, best.mean, top: best.top)) · ") +
                 peakFigure(metric, Double(series[peak]))
             let spike = ChartSpike(start: run.start, end: run.end, peak: peak, value: series[peak], appID: app.id, appName: app.name,
                                    label: label, detail: detail)
@@ -175,43 +175,43 @@ public enum SpikeFinder {
 
     static func minutes(_ seconds: Double) -> String {
         let m = Int((seconds / 60).rounded())
-        if m < 90 { return "\(max(1, m)) min" }
+        if m < 90 { return L("\(max(1, m)) min") }
         let h = Double(m) / 60
-        return String(format: h < 10 ? "%.1f h" : "%.0f h", h).replacingOccurrences(of: ".0 h", with: " h")
+        return String(format: h < 10 ? "%.1f h" : L("%.0f h"), h).replacingOccurrences(of: ".0 h", with: L(" h"))
     }
 
     static func phrase(_ metric: SpikeMetric, names: String, plural: Bool, mean: Double, top: Double, duration: Double) -> String {
         switch metric {
         case .cpu:
-            let cores = mean >= 1.5 ? "\(Int(mean.rounded())) cores" : (mean >= 0.95 ? "a core" : Format.percent(mean) + " of a core")
-            return "\(names) held \(cores) for \(minutes(duration))"
+            let cores = mean >= 1.5 ? "\(Int(mean.rounded())) cores" : (mean >= 0.95 ? "a core" : Format.percent(mean) + L(" of a core"))
+            return L("\(names) held \(cores) for \(minutes(duration))")
         case .memory:
-            return plural ? "\(names) grew to \(Format.memory(top))" : "\(names) grew to \(Format.memory(top))"
+            return plural ? "\(names) grew to \(Format.memory(top))" : L("\(names) grew to \(Format.memory(top))")
         case .power:
-            return "\(names) drew \(String(format: "%.0f W", mean)) for \(minutes(duration))"
+            return L("\(names) drew \(String(format: "%.0f W", mean)) for \(minutes(duration))")
         case .disk:
-            return "\(names) moved \(Format.bytes(mean * duration)) on disk in \(minutes(duration))"
+            return L("\(names) moved \(Format.bytes(mean * duration)) on disk in \(minutes(duration))")
         case .network:
-            return "\(names) moved \(Format.bytes(mean * duration)) in \(minutes(duration))"
+            return L("\(names) moved \(Format.bytes(mean * duration)) in \(minutes(duration))")
         }
     }
 
     /// The chart at its highest point in the spell, in the chart's own units.
     static func peakFigure(_ metric: SpikeMetric, _ value: Double) -> String {
         switch metric {
-        case .cpu: return "CPU peaked at " + Format.percent(value)
-        case .memory: return "memory peaked at " + Format.memory(value)
-        case .power: return String(format: "power peaked at %.0f W", value)
-        case .disk, .network: return "peaked at " + Format.rate(value)
+        case .cpu: return L("CPU peaked at ") + Format.percent(value)
+        case .memory: return L("memory peaked at ") + Format.memory(value)
+        case .power: return String(format: L("power peaked at %.0f W"), value)
+        case .disk, .network: return L("peaked at ") + Format.rate(value)
         }
     }
 
     static func figure(_ metric: SpikeMetric, _ mean: Double, top: Double) -> String {
         switch metric {
-        case .cpu: return String(format: "%.1f cores on average", mean)
-        case .memory: return "up to " + Format.memory(top)
-        case .power: return String(format: "%.1f W on average", mean)
-        case .disk, .network: return Format.rate(mean) + " on average"
+        case .cpu: return String(format: L("%.1f cores on average"), mean)
+        case .memory: return L("up to ") + Format.memory(top)
+        case .power: return String(format: L("%.1f W on average"), mean)
+        case .disk, .network: return Format.rate(mean) + L(" on average")
         }
     }
 }

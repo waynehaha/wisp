@@ -37,10 +37,10 @@ public enum DiagnosisAction: Codable, Sendable, Equatable {
 
     public var title: String {
         switch self {
-        case .showApp: return "Show"
-        case .quitApp: return "Quit…"
-        case .openPage: return "Show"
-        case .openStorage: return "Open Storage"
+        case .showApp: return L("Show")
+        case .quitApp: return L("Quit…")
+        case .openPage: return L("Show")
+        case .openStorage: return L("Open Storage")
         }
     }
 }
@@ -155,12 +155,12 @@ public enum Diagnoser {
 
         // CPU saturated, and by whom.
         if cpuTotal >= 0.85 {
-            var title = "CPU is at \(Format.percent(cpuTotal))"
-            var detail = "Every core is busy, so everything waits its turn"
+            var title = L("CPU is at \(Format.percent(cpuTotal))")
+            var detail = L("Every core is busy, so everything waits its turn")
             var finding = DiagnosisFinding(kind: .cpu, title: title, detail: detail, severity: 0.7 + 0.3 * min(1, (cpuTotal - 0.85) / 0.15))
             if let top = byCPU.first, top.cpu >= 0.5 {
-                title += ": \(top.name) is using \(cores(top.cpu))"
-                if byCPU.count > 1, byCPU[1].cpu >= 0.5 { detail = "Then \(byCPU[1].name) with \(cores(byCPU[1].cpu))" }
+                title += L(": \(top.name) is using \(cores(top.cpu))")
+                if byCPU.count > 1, byCPU[1].cpu >= 0.5 { detail = L("Then \(byCPU[1].name) with \(cores(byCPU[1].cpu))") }
                 finding.title = title
                 finding.detail = detail
                 finding.appID = top.id
@@ -175,8 +175,8 @@ public enum Diagnoser {
         // One app taking a big share of the cores right now, while the total is still under the line.
         if cpuTotal < 0.85, let top = byCPU.first, top.cpu >= max(2, coreCount * 0.3) {
             let share = top.cpu / coreCount
-            findings.append(DiagnosisFinding(kind: .cpu, title: "\(top.name) is using \(cores(top.cpu)), \(Format.percent(min(1, share))) of the CPU",
-                                             detail: "Other apps get what is left", severity: min(0.75, 0.4 + 0.4 * share),
+            findings.append(DiagnosisFinding(kind: .cpu, title: L("\(top.name) is using \(cores(top.cpu)), \(Format.percent(min(1, share))) of the CPU"),
+                                             detail: L("Other apps get what is left"), severity: min(0.75, 0.4 + 0.4 * share),
                                              appID: top.id, appName: top.name, action: .showApp(top.id)))
         }
 
@@ -185,8 +185,8 @@ public enum Diagnoser {
             guard let app = table.app(id), id != AppGrouping.systemID, findings.first(where: { $0.appID == id && $0.kind == .cpu }) == nil else { continue }
             guard let held = heldRun(minutes), held.minutes >= heldMinutes, app.cpu >= 0.5 else { continue }
             let severity = min(0.75, 0.35 + Double(held.minutes) / 60 + held.cores / coreCount * 0.5)
-            findings.append(DiagnosisFinding(kind: .heldCores, title: "\(app.name) has held \(cores(held.cores)) for \(held.minutes) min",
-                                             detail: "It is using \(cores(app.cpu)) right now", severity: severity,
+            findings.append(DiagnosisFinding(kind: .heldCores, title: L("\(app.name) has held \(cores(held.cores)) for \(held.minutes) min"),
+                                             detail: L("It is using \(cores(app.cpu)) right now"), severity: severity,
                                              appID: id, appName: app.name, action: .showApp(id)))
         }
 
@@ -198,22 +198,22 @@ public enum Diagnoser {
             let largest = table.apps.filter { $0.id != AppGrouping.systemID }.max { $0.memory < $1.memory }
             if m.pressure != .normal || swapping || compressedShare >= 0.3 {
                 var parts: [String] = []
-                if let largest, largest.memory >= m.total / 10 { parts.append("\(largest.name) is holding \(Format.memory(largest.memory))") }
+                if let largest, largest.memory >= m.total / 10 { parts.append(L("\(largest.name) is holding \(Format.memory(largest.memory))")) }
                 if swapping {
-                    parts.append("macOS is swapping \(Format.memory(swapRate * 60)) a minute")
+                    parts.append(L("macOS is swapping \(Format.memory(swapRate * 60)) a minute"))
                 } else if m.pressure != .normal {
-                    parts.append("memory pressure is \(m.pressure == .critical ? "critical" : "high")")
+                    parts.append(L("memory pressure is \(m.pressure == .critical ? "critical" : "high")"))
                 } else {
-                    parts.append("macOS has compressed \(Format.memory(m.compressed)) to make room")
+                    parts.append(L("macOS has compressed \(Format.memory(m.compressed)) to make room"))
                 }
-                var title = parts.joined(separator: " and ")
+                var title = parts.joined(separator: L(" and "))
                 // App names keep their own case ("limactl"); a sentence that starts with a reading does not.
                 if !(largest.map { largest in largest.memory >= m.total / 10 } ?? false), !title.hasPrefix("macOS") {
                     title = title.prefix(1).uppercased() + title.dropFirst()
                 }
-                var detail = "\(Format.memory(m.used)) of \(Format.memory(m.total)) in use"
-                if m.swapUsed > 0 { detail += ", \(Format.memory(m.swapUsed)) in swap" }
-                if swapping, m.compressed > 0 { detail += ", \(Format.memory(m.compressed)) compressed" }
+                var detail = L("\(Format.memory(m.used)) of \(Format.memory(m.total)) in use")
+                if m.swapUsed > 0 { detail += L(", \(Format.memory(m.swapUsed)) in swap") }
+                if swapping, m.compressed > 0 { detail += L(", \(Format.memory(m.compressed)) compressed") }
                 var severity = m.pressure == .critical ? 0.95 : (m.pressure == .warning ? 0.8 : 0.45)
                 if swapping { severity = max(severity, 0.6 + 0.3 * min(1, swapRate * 60 / 1_000_000_000)) }
                 var finding = DiagnosisFinding(kind: .memory, title: title, detail: detail, severity: severity)
@@ -229,19 +229,19 @@ public enum Diagnoser {
         // Thermal throttling.
         switch input.thermalState {
         case .serious, .critical:
-            var title = "macOS is slowing the CPU to cool it down"
-            if let limit = input.cpuSpeedLimit, limit < 100 { title = "macOS has capped the CPU at \(limit)% speed to cool it down" }
-            let hot = input.system.thermal?.cpuCelsius.map { "CPU at \(Format.celsius($0))" }
+            var title = L("macOS is slowing the CPU to cool it down")
+            if let limit = input.cpuSpeedLimit, limit < 100 { title = L("macOS has capped the CPU at \(limit)% speed to cool it down") }
+            let hot = input.system.thermal?.cpuCelsius.map { L("CPU at \(Format.celsius($0))") }
             findings.append(DiagnosisFinding(kind: .thermal, title: title,
-                                             detail: ([hot, "thermal pressure \(input.thermalState.rawValue)"].compactMap { $0 }).joined(separator: ", "),
+                                             detail: ([hot, L("thermal pressure \(input.thermalState.rawValue)")].compactMap { $0 }).joined(separator: ", "),
                                              severity: input.thermalState == .critical ? 0.95 : 0.85, action: .openPage("sensors")))
         case .fair:
             if let limit = input.cpuSpeedLimit, limit < 100 {
-                findings.append(DiagnosisFinding(kind: .thermal, title: "macOS has capped the CPU at \(limit)% speed",
-                                                 detail: "Thermal pressure is fair", severity: 0.6, action: .openPage("sensors")))
+                findings.append(DiagnosisFinding(kind: .thermal, title: L("macOS has capped the CPU at \(limit)% speed"),
+                                                 detail: L("Thermal pressure is fair"), severity: 0.6, action: .openPage("sensors")))
             } else if let celsius = input.system.thermal?.cpuCelsius, celsius >= 95 {
-                findings.append(DiagnosisFinding(kind: .thermal, title: "The CPU is at \(Format.celsius(celsius)) and may slow down soon",
-                                                 detail: "Thermal pressure is fair", severity: 0.4, action: .openPage("sensors")))
+                findings.append(DiagnosisFinding(kind: .thermal, title: L("The CPU is at \(Format.celsius(celsius)) and may slow down soon"),
+                                                 detail: L("Thermal pressure is fair"), severity: 0.4, action: .openPage("sensors")))
             }
         case .nominal:
             break
@@ -252,8 +252,8 @@ public enum Diagnoser {
             let share = Double(d.volumeFree) / Double(d.volumeTotal)
             if share < 0.1 || d.volumeFree < 20_000_000_000 {
                 let severity = d.volumeFree < 5_000_000_000 ? 0.9 : (d.volumeFree < 10_000_000_000 ? 0.75 : 0.55)
-                findings.append(DiagnosisFinding(kind: .diskSpace, title: "Only \(Format.bytes(d.volumeFree)) free on the startup disk",
-                                                 detail: "macOS needs free space for swap, caches and updates",
+                findings.append(DiagnosisFinding(kind: .diskSpace, title: L("Only \(Format.bytes(d.volumeFree)) free on the startup disk"),
+                                                 detail: L("macOS needs free space for swap, caches and updates"),
                                                  severity: severity, action: .openStorage))
             }
         }
@@ -264,8 +264,8 @@ public enum Diagnoser {
             let verb = writing ? "writing" : "reading"
             let rate = writing ? heavy.diskWritePerSecond : heavy.diskReadPerSecond
             let name = heavy.id == AppGrouping.systemID ? "macOS" : heavy.name
-            findings.append(DiagnosisFinding(kind: .diskActivity, title: "\(name) is \(verb) \(Format.rate(rate)) \(writing ? "to" : "from") disk",
-                                             detail: "Other apps wait longer to load and save",
+            findings.append(DiagnosisFinding(kind: .diskActivity, title: L("\(name) is \(verb) \(Format.rate(rate)) \(writing ? "to" : "from") disk"),
+                                             detail: L("Other apps wait longer to load and save"),
                                              severity: min(0.7, 0.35 + heavy.diskPerSecond / 1_000_000_000),
                                              appID: heavy.id, appName: name, action: .showApp(heavy.id)))
         }
@@ -277,17 +277,17 @@ public enum Diagnoser {
         let spotlightDisk = spotlight.reduce(0) { $0 + $1.diskReadPerSecond + $1.diskWritePerSecond }
         if spotlightCPU >= 0.5 || spotlightDisk >= 30_000_000 {
             let workers = spotlight.filter { $0.name.hasPrefix("mdworker") }.count
-            let who = workers > 1 ? "\(workers) mdworker processes are" : (spotlight.max { $0.cpu < $1.cpu }?.name ?? "mds") + " is"
-            findings.append(DiagnosisFinding(kind: .spotlight, title: "Spotlight is indexing: \(who) using \(cores(spotlightCPU))",
-                                             detail: "This usually settles once indexing is done",
+            let who = workers > 1 ? "\(workers) mdworker processes are" : (spotlight.max { $0.cpu < $1.cpu }?.name ?? "mds") + L(" is")
+            findings.append(DiagnosisFinding(kind: .spotlight, title: L("Spotlight is indexing: \(who) using \(cores(spotlightCPU))"),
+                                             detail: L("This usually settles once indexing is done"),
                                              severity: min(0.65, 0.3 + spotlightCPU / coreCount), appID: AppGrouping.systemID,
                                              appName: "macOS", action: .showApp(AppGrouping.systemID)))
         }
         let media = processes.filter { mediaNames.contains($0.name) }
         let mediaCPU = media.reduce(0) { $0 + $1.cpu }
         if mediaCPU >= 0.5, let top = media.max(by: { $0.cpu < $1.cpu }) {
-            findings.append(DiagnosisFinding(kind: .mediaAnalysis, title: "Photos is analysing your library: \(top.name) is using \(cores(mediaCPU))",
-                                             detail: "It runs while the Mac is idle or plugged in and stops when done",
+            findings.append(DiagnosisFinding(kind: .mediaAnalysis, title: L("Photos is analysing your library: \(top.name) is using \(cores(mediaCPU))"),
+                                             detail: L("It runs while the Mac is idle or plugged in and stops when done"),
                                              severity: min(0.6, 0.3 + mediaCPU / coreCount), appID: top.groupID, appName: "macOS",
                                              action: .showApp(top.groupID)))
         }
@@ -296,12 +296,12 @@ public enum Diagnoser {
         let unmeasured = table.unattributedCPU
         if input.timeMachineRunning {
             let busy = unmeasured >= 0.5 || (input.system.disk.map { $0.readBytesPerSecond + $0.writeBytesPerSecond } ?? 0) >= 20_000_000
-            findings.append(DiagnosisFinding(kind: .timeMachine, title: "Time Machine is backing up",
-                                             detail: busy ? "macOS processes Wisp cannot measure are using \(cores(unmeasured))" : "It reads every changed file once",
+            findings.append(DiagnosisFinding(kind: .timeMachine, title: L("Time Machine is backing up"),
+                                             detail: busy ? "macOS processes Wisp cannot measure are using \(cores(unmeasured))" : L("It reads every changed file once"),
                                              severity: busy ? 0.5 : 0.25))
         } else if unmeasured >= 2 {
-            findings.append(DiagnosisFinding(kind: .unmeasured, title: "macOS processes Wisp cannot measure are using \(cores(unmeasured))",
-                                             detail: "System services run as root; Activity Monitor shows them by name",
+            findings.append(DiagnosisFinding(kind: .unmeasured, title: L("macOS processes Wisp cannot measure are using \(cores(unmeasured))"),
+                                             detail: L("System services run as root; Activity Monitor shows them by name"),
                                              severity: min(0.6, 0.3 + unmeasured / coreCount), appID: AppGrouping.systemID, appName: "macOS",
                                              action: .showApp(AppGrouping.systemID)))
         }
@@ -318,11 +318,11 @@ public enum Diagnoser {
             }
         }
         if let gpu = input.system.gpu?.utilization, gpu >= 0.9 {
-            var finding = DiagnosisFinding(kind: .gpu, title: "GPU is at \(Format.percent(gpu))",
-                                           detail: "Scrolling, video and animations stutter when it is full", severity: 0.6)
+            var finding = DiagnosisFinding(kind: .gpu, title: L("GPU is at \(Format.percent(gpu))"),
+                                           detail: L("Scrolling, video and animations stutter when it is full"), severity: 0.6)
             if let (id, share) = gpuByApp.filter({ $0.key != "windowserver" }).max(by: { $0.value < $1.value }), share >= 0.2,
                let app = table.app(id) {
-                finding.title += ": \(app.name) is using \(Format.percent(share)) of it"
+                finding.title += L(": \(app.name) is using \(Format.percent(share)) of it")
                 finding.appID = id
                 finding.appName = app.name
                 finding.action = .showApp(id)
@@ -332,8 +332,8 @@ public enum Diagnoser {
             findings.append(finding)
         }
         if windowServerGPU >= 0.4 {
-            findings.append(DiagnosisFinding(kind: .windowServer, title: "WindowServer is using \(Format.percent(windowServerGPU)) of the GPU to draw the screen",
-                                             detail: "Many windows, displays or moving effects add to it",
+            findings.append(DiagnosisFinding(kind: .windowServer, title: L("WindowServer is using \(Format.percent(windowServerGPU)) of the GPU to draw the screen"),
+                                             detail: L("Many windows, displays or moving effects add to it"),
                                              severity: 0.45 + 0.2 * min(1, (windowServerGPU - 0.4) / 0.4), action: .openPage("gpu")))
         }
 
@@ -343,17 +343,17 @@ public enum Diagnoser {
         // Agents count only when together they are using enough to matter, not for being open.
         if input.agents.count >= 2 && (agentCPU >= 1.5 || agentMemory >= 6 << 30) {
             findings.append(DiagnosisFinding(kind: .developer,
-                                             title: "\(input.agents.count) coding agents are running, using \(cores(agentCPU)) and \(Format.memory(agentMemory)) together",
+                                             title: L("\(input.agents.count) coding agents are running, using \(cores(agentCPU)) and \(Format.memory(agentMemory)) together"),
                                              detail: extraDev(servers: input.devServers, containers: input.containers),
                                              severity: min(0.6, 0.25 + agentCPU / coreCount + Double(agentMemory) / Double(input.system.memory?.total ?? (64 << 30))),
                                              action: .openPage("agents")))
         } else if input.containers >= 3 {
-            findings.append(DiagnosisFinding(kind: .developer, title: "\(input.containers) containers are running",
+            findings.append(DiagnosisFinding(kind: .developer, title: L("\(input.containers) containers are running"),
                                              detail: extraDev(servers: input.devServers, containers: 0), severity: 0.3, action: .openPage("docker")))
         } else if input.devServers >= 3 && (input.devServerCPU >= 1 || input.devServerMemory >= 4 << 30) {
             findings.append(DiagnosisFinding(kind: .developer,
-                                             title: "\(input.devServers) dev servers are using \(cores(input.devServerCPU)) and \(Format.memory(input.devServerMemory)) together",
-                                             detail: "Stop the ones you are not working on", severity: 0.3, action: .openPage("ports")))
+                                             title: L("\(input.devServers) dev servers are using \(cores(input.devServerCPU)) and \(Format.memory(input.devServerMemory)) together"),
+                                             detail: L("Stop the ones you are not working on"), severity: 0.3, action: .openPage("ports")))
         }
 
         findings.sort { $0.severity > $1.severity }
@@ -363,17 +363,17 @@ public enum Diagnoser {
             return finding
         }
         let numbers = keyNumbers(input, cpuTotal: cpuTotal)
-        let summary = ranked.first.map { $0.title } ?? "Nothing is slowing this Mac down"
+        let summary = ranked.first.map { $0.title } ?? L("Nothing is slowing this Mac down")
         return Diagnosis(date: input.system.date, sampled: input.sampled, findings: ranked, summary: summary, numbers: numbers)
     }
 
     /// "CPU 14%", "Memory pressure normal", "212 GB free".
     static func keyNumbers(_ input: DiagnosisInput, cpuTotal: Double) -> [String] {
-        var numbers = ["CPU \(Format.percent(cpuTotal))"]
+        var numbers = [L("CPU \(Format.percent(cpuTotal))")]
         if let m = input.system.memory {
-            numbers.append("Memory pressure \(m.pressure == .normal ? "normal" : (m.pressure == .warning ? "high" : "critical"))")
+            numbers.append(L("Memory pressure \(m.pressure == .normal ? "normal" : (m.pressure == .warning ? "high" : "critical"))"))
         }
-        if let d = input.system.disk, d.volumeTotal > 0 { numbers.append("\(Format.bytes(d.volumeFree)) free") }
+        if let d = input.system.disk, d.volumeTotal > 0 { numbers.append(L("\(Format.bytes(d.volumeFree)) free")) }
         return numbers
     }
 
@@ -393,15 +393,15 @@ public enum Diagnoser {
 
     /// "1 core", "3.2 cores".
     static func cores(_ value: Double) -> String {
-        if value < 1.05 && value >= 0.95 { return "1 core" }
-        if value < 0.95 { return Format.percent(value) + " of a core" }
-        return String(format: value < 10 ? "%.1f cores" : "%.0f cores", value)
+        if value < 1.05 && value >= 0.95 { return L("1 core") }
+        if value < 0.95 { return Format.percent(value) + L(" of a core") }
+        return String(format: value < 10 ? "%.1f cores" : L("%.0f cores"), value)
     }
 
     private static func extraDev(servers: Int, containers: Int) -> String {
         var parts: [String] = []
-        if servers > 0 { parts.append("\(servers) dev server\(servers == 1 ? "" : "s")") }
-        if containers > 0 { parts.append("\(containers) container\(containers == 1 ? "" : "s")") }
-        return parts.isEmpty ? "Each one runs builds, tests and language servers" : "Also running: " + parts.joined(separator: ", ")
+        if servers > 0 { parts.append(L("\(servers) dev server\(servers == 1 ? "" : L10n.pluralSuffix)")) }
+        if containers > 0 { parts.append(L("\(containers) container\(containers == 1 ? "" : L10n.pluralSuffix)")) }
+        return parts.isEmpty ? "Each one runs builds, tests and language servers" : L("Also running: ") + parts.joined(separator: ", ")
     }
 }

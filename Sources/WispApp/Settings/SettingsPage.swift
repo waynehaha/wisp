@@ -24,12 +24,12 @@ final class SettingsPage: NSViewController, Page {
 
         var title: String {
             switch self {
-            case .general: return "General"
-            case .menuBar: return "Menu Bar"
-            case .display: return "Display"
-            case .alerts: return "Alerts"
-            case .assistants: return "Assistants"
-            case .about: return "About"
+            case .general: return L("General")
+            case .menuBar: return L("Menu Bar")
+            case .display: return L("Display")
+            case .alerts: return L("Alerts")
+            case .assistants: return L("Assistants")
+            case .about: return L("About")
             }
         }
 
@@ -61,7 +61,7 @@ final class SettingsPage: NSViewController, Page {
     private let page = SettingsPageView()
     private(set) var section: Section = .general
     private let headingTitle = TextLine()
-    private let headingSubtitle = TextLine(Toolbar.subtitle("Settings"))
+    private let headingSubtitle = TextLine(Toolbar.subtitle(L("Settings")))
     private lazy var builder: DashboardBuilder = {
         let builder = DashboardBuilder(delegate: delegate)
         builder.onHeightChange = { [weak self] in self?.rebuild() }
@@ -151,23 +151,23 @@ final class SettingsPage: NSViewController, Page {
             let menuIntervals: [Double] = [1, 2, 3, 5, 10]
             return [
                 SettingsGroup(nil, [
-                    .control("Update every", "While a Wisp window or the dashboard is open.",
-                             popup(intervals.map { $0 == 1 ? "Second" : "\(Int($0)) seconds" }, intervals.firstIndex(of: s.interval) ?? 1) { [unowned self] i in
+                    .control(L("Update every"), L("While a Wisp window or the dashboard is open."),
+                             popup(intervals.map { $0 == 1 ? L("Second") : L("\(Int($0)) seconds") }, intervals.firstIndex(of: s.interval) ?? 1) { [unowned self] i in
                                  delegate.change { $0.interval = intervals[i] }
                              }),
-                    .control("Menu bar", "Redrawing the menu bar is most of what Wisp costs with every window closed.",
-                             popup(menuIntervals.map { $0 == 1 ? "Every second" : "Every \(Int($0)) seconds" }, menuIntervals.firstIndex(of: s.menuInterval) ?? 2) { [unowned self] i in
+                    .control(L("Menu bar"), L("Redrawing the menu bar is most of what Wisp costs with every window closed."),
+                             popup(menuIntervals.map { $0 == 1 ? L("Every second") : L("Every \(Int($0)) seconds") }, menuIntervals.firstIndex(of: s.menuInterval) ?? 2) { [unowned self] i in
                                  delegate.change { $0.menuInterval = menuIntervals[i] }
                              }),
                 ]),
-                SettingsGroup("History", [
-                    .control("Keep a year of per-app history", "Minute by minute for a day, hourly totals for a year, on this Mac only.",
+                SettingsGroup(L("History"), [
+                    .control(L("Keep a year of per-app history"), L("Minute by minute for a day, hourly totals for a year, on this Mac only."),
                              toggle(s.keepHistory) { [unowned self] on in delegate.change { $0.keepHistory = on } }),
-                    .control("Track network per app in the background", "Off, per-app network is measured only while a window shows it.",
+                    .control(L("Track network per app in the background"), L("Off, per-app network is measured only while a window shows it."),
                              toggle(s.trackAppNetwork) { [unowned self] on in delegate.change { $0.trackAppNetwork = on } }),
                 ]),
-                SettingsGroup("Startup", [
-                    .control("Open Wisp at login", nil, toggle(SMAppService.mainApp.status == .enabled) { on in
+                SettingsGroup(L("Startup"), [
+                    .control(L("Open Wisp at login"), nil, toggle(SMAppService.mainApp.status == .enabled) { on in
                         do {
                             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
                         } catch {
@@ -184,40 +184,40 @@ final class SettingsPage: NSViewController, Page {
                 let enable = toggle(item.enabled) { [unowned self] on in delegate.change { $0.menuItems[index].enabled = on } }
                 return .pair(item.metric.title, item.metric.symbol, style, enable)
             }
-            rows.append(.control("Show icons next to numbers", "A reading turns red when the Mac is under strain.",
+            rows.append(.control(L("Show icons next to numbers"), L("A reading turns red when the Mac is under strain."),
                                  toggle(s.showIcons) { [unowned self] on in delegate.change { $0.showIcons = on } }))
             builder.needsLayout = true
             return [
-                SettingsGroup("Dashboard", [
+                SettingsGroup(L("Dashboard"), [
                     .custom(builder, builder.preferredHeight),
-                    .control("Reset the dashboard", "Back to the CPU, meters, cores and apps.", pill("Reset to Default") { [unowned self] in builder.reset() }),
-                ], footer: "The dashboard opens from the menu bar. It reads only what its blocks show, and nothing while it is closed."),
-                SettingsGroup("Shown in the menu bar", rows),
+                    .control(L("Reset the dashboard"), L("Back to the CPU, meters, cores and apps."), pill(L("Reset to Default")) { [unowned self] in builder.reset() }),
+                ], footer: L("The dashboard opens from the menu bar. It reads only what its blocks show, and nothing while it is closed.")),
+                SettingsGroup(L("Shown in the menu bar"), rows),
             ]
         case .display:
             let looks = Look.allCases
             let pages = PageID.allCases.filter { $0 != .settings }
             return [
-                SettingsGroup("Window", [
-                    .control("Appearance", nil, popup(["Light", "Dark", "Match the system"], looks.firstIndex(of: s.look) ?? 0) { [unowned self] i in
+                SettingsGroup(L("Window"), [
+                    .control(L("Appearance"), nil, popup([L("Light"), L("Dark"), L("Match the system")], looks.firstIndex(of: s.look) ?? 0) { [unowned self] i in
                         delegate.change { $0.look = looks[i] }
                     }),
-                    .control("Show Wisp in the Dock", nil, toggle(s.showInDock) { [unowned self] on in delegate.change { $0.showInDock = on } }),
-                    .control("Open the window when Wisp starts", nil,
+                    .control(L("Show Wisp in the Dock"), nil, toggle(s.showInDock) { [unowned self] on in delegate.change { $0.showInDock = on } }),
+                    .control(L("Open the window when Wisp starts"), nil,
                              toggle(s.openWindowAtLaunch) { [unowned self] on in delegate.change { $0.openWindowAtLaunch = on } }),
-                    .control("Start on", "The page a new window opens on.",
+                    .control(L("Start on"), L("The page a new window opens on."),
                              popup(pages.map(\.title), pages.firstIndex { $0.rawValue == s.startPage } ?? 0) { [unowned self] i in
                                  delegate.change { $0.startPage = pages[i].rawValue }
                              }),
                 ]),
-                SettingsGroup("Units", [
-                    .control("App CPU", "How a busy app's CPU reads.", popup(["100% is one core", "100% is the whole Mac"], s.cpuOfMachine ? 1 : 0) { [unowned self] i in
+                SettingsGroup(L("Units"), [
+                    .control(L("App CPU"), L("How a busy app's CPU reads."), popup([L("100% is one core"), L("100% is the whole Mac")], s.cpuOfMachine ? 1 : 0) { [unowned self] i in
                         delegate.change { $0.cpuOfMachine = i == 1 }
                     }),
-                    .control("Temperature", nil, popup(["Celsius", "Fahrenheit"], s.fahrenheit ? 1 : 0) { [unowned self] i in
+                    .control(L("Temperature"), nil, popup([L("Celsius"), L("Fahrenheit")], s.fahrenheit ? 1 : 0) { [unowned self] i in
                         delegate.change { $0.fahrenheit = i == 1 }
                     }),
-                    .control("Network", nil, popup(["Bytes per second", "Bits per second"], s.bits ? 1 : 0) { [unowned self] i in
+                    .control(L("Network"), nil, popup([L("Bytes per second"), L("Bits per second")], s.bits ? 1 : 0) { [unowned self] i in
                         delegate.change { $0.bits = i == 1 }
                     }),
                 ]),
@@ -226,57 +226,57 @@ final class SettingsPage: NSViewController, Page {
             let rules = s.alerts
             var limits: [SettingsRow] = rules.appLimits.enumerated().map { index, limit in
                 var parts: [String] = []
-                if let bytes = limit.memoryBytes { parts.append("over \(Format.memory(bytes)) of memory") }
-                if let cores = limit.cpu { parts.append("over \(Format.percent(cores)) CPU") }
-                let remove = pill("Remove") { [unowned self] in
+                if let bytes = limit.memoryBytes { parts.append(L("over \(Format.memory(bytes)) of memory")) }
+                if let cores = limit.cpu { parts.append(L("over \(Format.percent(cores)) CPU")) }
+                let remove = pill(L("Remove")) { [unowned self] in
                     delegate.change { $0.alerts.appLimits.remove(at: index) }
                     rebuild()
                 }
-                return .control(limit.appName, "Tell me when it goes " + parts.joined(separator: " or ") + " for a minute.", remove)
+                return .control(limit.appName, L("Tell me when it goes ") + parts.joined(separator: L(" or ")) + L(" for a minute."), remove)
             }
-            limits.append(.control(rules.appLimits.isEmpty ? "No app limits yet" : "Add another", "A memory or CPU limit for one app.",
-                                   pill("Add Limit…") { [unowned self] in addLimit() }))
+            limits.append(.control(rules.appLimits.isEmpty ? L("No app limits yet") : L("Add another"), L("A memory or CPU limit for one app."),
+                                   pill(L("Add Limit…")) { [unowned self] in addLimit() }))
             let recent = delegate.monitor.perform { $0.alerts.recent }.suffix(8).reversed()
             let time = DateFormatter()
             time.dateFormat = "MMM d, HH:mm"
             var history: [SettingsRow] = recent.map { .control($0.title, time.string(from: $0.date) + " · " + $0.body, nil) }
             if history.isEmpty {
-                history = [.control("Nothing yet", "Alerts Wisp raises show up here and survive a restart.", nil)]
+                history = [.control(L("Nothing yet"), L("Alerts Wisp raises show up here and survive a restart."), nil)]
             } else {
-                history.append(.control("", nil, pill("Clear History") { [unowned self] in
+                history.append(.control("", nil, pill(L("Clear History")) { [unowned self] in
                     delegate.monitor.perform { $0.alerts.clear() }
                     rebuild()
                 }))
             }
             return [
-                SettingsGroup("Tell me when", [
-                    .control("An app keeps a core busy", "For \(Int(rules.cpuMinutes)) minutes.",
+                SettingsGroup(L("Tell me when"), [
+                    .control(L("An app keeps a core busy"), L("For \(Int(rules.cpuMinutes)) minutes."),
                              toggle(rules.cpuEnabled) { [unowned self] on in delegate.change { $0.alerts.cpuEnabled = on } }),
-                    .control("An app keeps growing in memory", "By \(Format.bytes(rules.memoryGrowthBytes)) in \(rules.memoryWindowMinutes) minutes.",
+                    .control(L("An app keeps growing in memory"), L("By \(Format.bytes(rules.memoryGrowthBytes)) in \(rules.memoryWindowMinutes) minutes."),
                              toggle(rules.memoryEnabled) { [unowned self] on in delegate.change { $0.alerts.memoryEnabled = on } }),
-                    .control("An app writes a lot to disk", "\(Format.rate(rules.diskBytesPerSecond)) for \(Int(rules.diskMinutes)) minutes.",
+                    .control(L("An app writes a lot to disk"), L("\(Format.rate(rules.diskBytesPerSecond)) for \(Int(rules.diskMinutes)) minutes."),
                              toggle(rules.diskEnabled) { [unowned self] on in delegate.change { $0.alerts.diskEnabled = on } }),
-                    .control("An app moves a lot of data", "\(Format.rate(rules.networkBytesPerSecond)) for \(Int(rules.networkMinutes)) minutes.",
+                    .control(L("An app moves a lot of data"), L("\(Format.rate(rules.networkBytesPerSecond)) for \(Int(rules.networkMinutes)) minutes."),
                              toggle(rules.networkEnabled) { [unowned self] on in delegate.change { $0.alerts.networkEnabled = on } }),
-                    .control("The CPU runs hot", "Above \(Format.celsius(rules.temperatureCelsius)) for \(Int(rules.temperatureMinutes)) minutes.",
+                    .control(L("The CPU runs hot"), L("Above \(Format.celsius(rules.temperatureCelsius)) for \(Int(rules.temperatureMinutes)) minutes."),
                              toggle(rules.temperatureEnabled) { [unowned self] on in delegate.change { $0.alerts.temperatureEnabled = on } }),
-                ], footer: "Each app is mentioned at most once every \(Int(rules.cooldownMinutes)) minutes per rule, also with every window closed."),
-                SettingsGroup("App limits", limits),
-                SettingsGroup("Recent", history),
+                ], footer: L("Each app is mentioned at most once every \(Int(rules.cooldownMinutes)) minutes per rule, also with every window closed.")),
+                SettingsGroup(L("App limits"), limits),
+                SettingsGroup(L("Recent"), history),
             ]
         case .assistants:
             let command = "claude mcp add wisp -- /Applications/Wisp.app/Contents/Helpers/wisp mcp"
             return [
-                SettingsGroup("MCP server", [
-                    .control("Let Claude, Codex and Cursor read Wisp", "They see what the CLI prints. They can ask you to quit an app; nothing quits unless you agree.",
+                SettingsGroup(L("MCP server"), [
+                    .control(L("Let Claude, Codex and Cursor read Wisp"), L("They see what the CLI prints. They can ask you to quit an app; nothing quits unless you agree."),
                              toggle(s.allowMCP) { [unowned self] on in delegate.change { $0.allowMCP = on } }),
-                    .control("Add it to Claude Code", command, pill("Copy") {
+                    .control(L("Add it to Claude Code"), command, pill(L("Copy")) {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(command, forType: .string)
                     }),
                 ]),
-                SettingsGroup("Plan limits", [
-                    .control("Show AI plan limits and tokens used today", "Adds Wisp to Claude Code's status line (yours keeps working) and reads Codex's session logs. No sign-ins are read and nothing is sent.",
+                SettingsGroup(L("Plan limits"), [
+                    .control(L("Show AI plan limits and tokens used today"), L("Adds Wisp to Claude Code's status line (yours keeps working) and reads Codex's session logs. No sign-ins are read and nothing is sent."),
                              toggle(s.planUsage) { [unowned self] on in
                                  delegate.change { $0.planUsage = on }
                                  PlanLimitsSetup.apply(on: on)
@@ -286,8 +286,8 @@ final class SettingsPage: NSViewController, Page {
         case .about:
             return [
                 SettingsGroup(nil, [.custom(AboutCard(), 168)]),
-                SettingsGroup("Privacy", [
-                    .control("Nothing leaves this Mac", "No analytics, no updater, no network requests beyond looking up host names. History lives in ~/Library/Application Support/Wisp.", nil),
+                SettingsGroup(L("Privacy"), [
+                    .control(L("Nothing leaves this Mac"), L("No analytics, no updater, no network requests beyond looking up host names. History lives in ~/Library/Application Support/Wisp."), nil),
                 ]),
             ]
         }
@@ -327,15 +327,15 @@ final class SettingsPage: NSViewController, Page {
         let appMenu = NSPopUpButton()
         appMenu.addItems(withTitles: apps.map(\.name))
         let kindMenu = NSPopUpButton()
-        kindMenu.addItems(withTitles: ["Memory over", "CPU over"])
+        kindMenu.addItems(withTitles: [L("Memory over"), L("CPU over")])
         let amount = NSTextField(string: "4")
         amount.alignment = .right
         amount.widthAnchor.constraint(equalToConstant: 56).isActive = true
-        let unit = Style.label("GB")
+        let unit = Style.label(L("GB"))
         kindMenu.target = ActionTarget.shared
         ActionTarget.shared.run = { [weak kindMenu, weak amount, weak unit] in
             let cpu = kindMenu?.indexOfSelectedItem == 1
-            unit?.stringValue = cpu ? "% of a core" : "GB"
+            unit?.stringValue = cpu ? L("% of a core") : L("GB")
             amount?.stringValue = cpu ? "150" : "4"
         }
         kindMenu.action = #selector(ActionTarget.fire)
@@ -343,11 +343,11 @@ final class SettingsPage: NSViewController, Page {
         let accessory = Style.stack([appMenu, line], axis: .vertical, spacing: 8, alignment: .leading)
         accessory.frame.size = accessory.fittingSize
         let alert = NSAlert()
-        alert.messageText = "Add an app limit"
-        alert.informativeText = "Wisp tells you when the app stays over it for a minute."
+        alert.messageText = L("Add an app limit")
+        alert.informativeText = L("Wisp tells you when the app stays over it for a minute.")
         alert.accessoryView = accessory
-        alert.addButton(withTitle: "Add")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("Add"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.beginSheetModal(for: window) { [unowned self] response in
             guard response == .alertFirstButtonReturn, let value = Double(amount.stringValue.replacingOccurrences(of: ",", with: ".")), value > 0 else { return }
             let app = apps[apps.startIndex + appMenu.indexOfSelectedItem]
@@ -519,8 +519,8 @@ final class AboutCard: DrawnView {
         }
         NSAttributedString(string: "Wisp", attributes: [.font: Theme.sans(24, .semibold), .foregroundColor: Theme.ink])
             .draw(at: NSPoint(x: 134, y: 30))
-        Theme.caption("Version \(Wisp.version)", size: 10).draw(at: NSPoint(x: 136, y: 66))
-        let text = "A system monitor that stays out of the way: about 0.2% of one core and 18 MB with only the menu bar showing."
+        Theme.caption(L("Version \(Wisp.version)"), size: 10).draw(at: NSPoint(x: 136, y: 66))
+        let text = L("A system monitor that stays out of the way: about 0.2% of one core and 18 MB with only the menu bar showing.")
         (text as NSString).draw(with: NSRect(x: 136, y: 88, width: bounds.width - 160, height: 60), options: [.usesLineFragmentOrigin],
                                 attributes: [.font: Theme.sans(12.5), .foregroundColor: Theme.inkSecondary])
     }

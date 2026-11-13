@@ -12,7 +12,7 @@ final class AppStorageSection: CardView {
     private var rows: [PartRow] = []
     private let footnote = TextLine()
     private lazy var clearButton: ActionButton = {
-        let button = ActionButton(title: "Clear Cache…", target: self, action: #selector(clearCache))
+        let button = ActionButton(title: L("Clear Cache…"), target: self, action: #selector(clearCache))
         button.secondary = true
         return button
     }()
@@ -39,7 +39,7 @@ final class AppStorageSection: CardView {
         super.init()
         radius = 14
         for view in [title, headline, bar, footnote, clearButton] as [NSView] { addSubview(view) }
-        title.text = NSAttributedString(string: "Storage", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
+        title.text = NSAttributedString(string: L("Storage"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -104,7 +104,7 @@ final class AppStorageSection: CardView {
 
     private func refresh() {
         guard let storage else {
-            headline.text = NSAttributedString(string: "Measuring…", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.inkSecondary])
+            headline.text = NSAttributedString(string: L("Measuring…"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.inkSecondary])
             bar.segments = []
             rows.forEach { $0.isHidden = true }
             footnote.isHidden = true
@@ -114,7 +114,7 @@ final class AppStorageSection: CardView {
         }
         let total = storage.total
         let text = NSMutableAttributedString(string: Format.bytes(total), attributes: [.font: Theme.figure(15, .semibold), .foregroundColor: Theme.ink])
-        text.append(NSAttributedString(string: " on disk", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink]))
+        text.append(NSAttributedString(string: L(" on disk"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink]))
         headline.text = text
         let parts = storage.parts.sorted { $0.size > $1.size }
         bar.segments = parts.map { (Double($0.size) / Double(max(total, 1)), Self.colors[$0.name] ?? Theme.inkTertiary) }
@@ -128,8 +128,8 @@ final class AppStorageSection: CardView {
             row.isHidden = index >= parts.count
             guard index < parts.count else { continue }
             let part = parts[index]
-            let where_ = part.paths.count == 1 ? part.paths[0].replacingOccurrences(of: home, with: "~") : "\(part.paths.count) folders"
-            row.set(name: part.name, note: part.locked ? "Needs Full Disk Access" : (part.name == "App" ? part.detail : where_),
+            let where_ = part.paths.count == 1 ? part.paths[0].replacingOccurrences(of: home, with: "~") : L("\(part.paths.count) folders")
+            row.set(name: L10n.string(part.name), note: part.locked ? L("Needs Full Disk Access") : (part.name == "App" ? part.detail : where_),
                     share: part.locked || total == 0 ? "" : Format.percent(Double(part.size) / Double(total)),
                     value: part.locked ? "–" : Format.bytes(part.size),
                     symbol: Self.symbols[part.name] ?? "folder.fill", tint: Self.colors[part.name] ?? Theme.inkTertiary)
@@ -137,9 +137,9 @@ final class AppStorageSection: CardView {
             row.toolTip = part.paths.joined(separator: "\n")
         }
         footnote.isHidden = false
-        footnote.text = Theme.caption("Measured " + StoragePage.ago(storage.measuredAt) + " · folders in Library named after the app", size: 9)
+        footnote.text = Theme.caption(L("Measured ") + StoragePage.ago(storage.measuredAt) + L(" · folders in Library named after the app"), size: 9)
         clearButton.isHidden = storage.cacheSize == 0
-        clearButton.title = "Clear Cache (\(Format.bytes(storage.cacheSize)))…"
+        clearButton.title = L("Clear Cache (\(Format.bytes(storage.cacheSize)))…")
         clearButton.invalidateIntrinsicContentSize()
         needsLayout = true
     }
@@ -169,11 +169,11 @@ final class AppStorageSection: CardView {
         guard !entries.isEmpty else { return }
         let name = ((path as NSString).lastPathComponent as NSString).deletingPathExtension
         let alert = NSAlert()
-        alert.messageText = "Move \(name)'s cache to the Trash?"
+        alert.messageText = L("Move \(name)'s cache to the Trash?")
         alert.informativeText = entries.map { "\(Format.bytes($0.size))   \($0.path.replacingOccurrences(of: home, with: "~"))" }.joined(separator: "\n")
-            + "\n\n\(name) makes its cache again as needed. Quit it first so it does not write there while the folders move."
-        alert.addButton(withTitle: "Move to Trash")
-        alert.addButton(withTitle: "Cancel")
+            + L("\n\n\(name) makes its cache again as needed. Quit it first so it does not write there while the folders move.")
+        alert.addButton(withTitle: L("Move to Trash"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
             NSWorkspace.shared.recycle(entries.map { URL(fileURLWithPath: $0.path) }) { _, _ in

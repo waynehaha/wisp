@@ -22,12 +22,12 @@ final class NetworkCards {
 
     init(page: MachinePage) {
         self.page = page
-        dataCard.title.text = page.cardTitle("Most data", "this month")
-        dataCard.toggle = Segmented(["5 min", "Today", "Month"])
+        dataCard.title.text = page.cardTitle(L("Most data"), L("this month"))
+        dataCard.toggle = Segmented([L("5 min"), L("Today"), L("Month")])
         dataCard.toggle?.select(2, animated: false)
         dataCard.toggle?.onChange = { [weak self] _ in self?.dataAt = .distantPast; self?.refreshData() }
-        hostsCard.title.text = page.cardTitle("Hosts", "all apps")
-        hostsCard.footnote.text = Theme.caption("Open connections, counted since each one opened", size: 9.5)
+        hostsCard.title.text = page.cardTitle(L("Hosts"), L("all apps"))
+        hostsCard.footnote.text = Theme.caption(L("Open connections, counted since each one opened"), size: 9.5)
         for (index, row) in dataCard.rows.enumerated() {
             row.onClick = { [weak self] in
                 guard let self, index < self.appIDs.count else { return }
@@ -59,7 +59,7 @@ final class NetworkCards {
         case 1: totals = usage.totals(since: Calendar.current.startOfDay(for: now))
         default: totals = usage.totals(since: usage.startOfMonth(now))
         }
-        dataCard.title.text = page.cardTitle("Most data", ["in the last 5 minutes", "today", "this month"][mode])
+        dataCard.title.text = page.cardTitle(L("Most data"), [L("in the last 5 minutes"), L("today"), L("this month")][mode])
         let top = totals.sorted { $0.value.bytes > $1.value.bytes }.filter { $0.value.bytes >= 1 }.prefix(Self.rows)
         appIDs = top.map(\.key)
         let peak = max(top.first?.value.bytes ?? 1, 1)
@@ -68,15 +68,15 @@ final class NetworkCards {
             let app = table.app(id)
             let icon = app.map { Icons.icon(for: $0) }
                 ?? Icons.icon(id: id, kind: id.hasSuffix(".app") ? .app : .tool, bundlePath: id.hasSuffix(".app") ? id : nil)
-            let note = mode == 0 ? "\(Format.rate(entry.bytes / window)) on average"
+            let note = mode == 0 ? L("\(Format.rate(entry.bytes / window)) on average")
                 : "↓ \(Format.bytes(entry.received)) ↑ \(Format.bytes(entry.sent))"
             return NetworkListCard.Item(icon: icon, name: app?.name ?? entry.name, note: note, value: Format.bytes(entry.bytes),
                                  fraction: entry.bytes / peak)
-        }, empty: usage.since == nil || !table.networkMeasured && totals.isEmpty ? "Nothing counted yet" : "No data used")
+        }, empty: usage.since == nil || !table.networkMeasured && totals.isEmpty ? L("Nothing counted yet") : L("No data used"))
         if mode == 0 {
             let minutes = Int((seconds / 60).rounded())
-            dataCard.footnote.text = Theme.caption(seconds < 280 ? "Measured for \(max(minutes, seconds > 0 ? 1 : 0)) of the last 5 minutes"
-                                                   : "Average rates, for finding what uses a hotspot", size: 9.5)
+            dataCard.footnote.text = Theme.caption(seconds < 280 ? L("Measured for \(max(minutes, seconds > 0 ? 1 : 0)) of the last 5 minutes")
+                                                   : L("Average rates, for finding what uses a hotspot"), size: 9.5)
         } else {
             dataCard.footnote.text = Theme.caption(AppNetworkSection.sinceNote(usage.since, background: page.delegate.settings.trackAppNetwork,
                                                                                monthStart: mode == 1 ? Calendar.current.startOfDay(for: now) : usage.startOfMonth(now)),
@@ -88,7 +88,7 @@ final class NetworkCards {
 
     private func refreshHosts(_ table: ProcessTable) {
         guard let page, !busy, table.networkMeasured else {
-            if !table.networkMeasured { hostsCard.fill([], empty: "Per-app traffic is off") }
+            if !table.networkMeasured { hostsCard.fill([], empty: L("Per-app traffic is off")) }
             return
         }
         busy = true
@@ -101,7 +101,7 @@ final class NetworkCards {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busy = false
-                self.hostsCard.fill(items, empty: "No connections")
+                self.hostsCard.fill(items, empty: L("No connections"))
             }
         }
     }
@@ -115,7 +115,7 @@ final class NetworkCards {
             entry.bytes &+= flow.received &+ flow.sent
             entry.received &+= flow.received
             entry.sent &+= flow.sent
-            entry.apps[appOf[flow.owner] ?? appOf[flow.pid] ?? "Process \(flow.owner)", default: 0] &+= flow.received &+ flow.sent
+            entry.apps[appOf[flow.owner] ?? appOf[flow.pid] ?? L("Process \(flow.owner)"), default: 0] &+= flow.received &+ flow.sent
             byAddress[remote.address] = entry
         }
         // Names for the busiest addresses only; the rest group by address.
@@ -138,7 +138,7 @@ final class NetworkCards {
         let peak = Double(max(top.first?.value.bytes ?? 1, 1))
         return top.map { name, group in
             let apps = group.apps.sorted { $0.value > $1.value }.map(\.key)
-            let note = apps.count > 2 ? "\(apps[0]), \(apps[1]) and \(apps.count - 2) more" : apps.joined(separator: ", ")
+            let note = apps.count > 2 ? L("\(apps[0]), \(apps[1]) and \(apps.count - 2) more") : apps.joined(separator: ", ")
             return NetworkListCard.Item(icon: nil, name: name, note: note, value: Format.bytes(group.bytes), fraction: Double(group.bytes) / peak)
         }
     }

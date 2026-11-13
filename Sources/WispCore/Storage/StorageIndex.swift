@@ -107,7 +107,7 @@ public final class StorageIndex: @unchecked Sendable {
         lock.withLock {
             guard !isOpen else { return }
             isOpen = true
-            generation += 1
+            self.generation += 1
             flag = ScanFlag()
             historyDone = false
         }

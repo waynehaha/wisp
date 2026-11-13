@@ -73,7 +73,7 @@ final class PlanCard: CardView {
             row.isHidden = index >= usage.windows.count
             guard index < usage.windows.count else { continue }
             let window = usage.windows[index]
-            row.name = window.name
+            row.name = L10n.string(window.name)
             row.used = window.used
             let pace = Self.pace(window, now: now)
             row.detail = pace.text
@@ -89,21 +89,21 @@ final class PlanCard: CardView {
         guard let updated, now.timeIntervalSince(updated) > 900 else { return "" }
         let minutes = Int(now.timeIntervalSince(updated) / 60)
         let text = minutes < 60 ? "\(minutes)m" : (minutes < 1440 ? "\(minutes / 60)h" : "\(minutes / 1440)d")
-        return " · as of " + text + " ago"
+        return L(" · as of ") + text + L(" ago")
     }
 
     /// When the window resets and, if the current pace would use it up first, when that happens.
     static func pace(_ window: PlanUsage.Window, now: Date) -> (text: String, short: Bool) {
-        guard let resets = window.resets else { return (window.used == 0 ? "Not used since it reset" : "", false) }
+        guard let resets = window.resets else { return (window.used == 0 ? L("Not used since it reset") : "", false) }
         let left = resets.timeIntervalSince(now)
-        guard left > 0 else { return ("Resetting", false) }
+        guard left > 0 else { return (L("Resetting"), false) }
         let length: Double = window.name.hasPrefix("5-hour") ? 5 * 3600 : 7 * 86_400
         let elapsed = max(60, length - left)
-        if window.used == 0, left > length - 120 { return ("Not started", false) }
-        let resetText = "Resets in " + Format.duration(left)
-        guard window.used > 0.02, window.used < 1 else { return (window.used >= 1 ? "Used up · " + resetText : resetText, window.used >= 1) }
+        if window.used == 0, left > length - 120 { return (L("Not started"), false) }
+        let resetText = L("Resets in ") + Format.duration(left)
+        guard window.used > 0.02, window.used < 1 else { return (window.used >= 1 ? L("Used up · ") + resetText : resetText, window.used >= 1) }
         let runsOut = (1 - window.used) * elapsed / window.used
-        if runsOut < left { return ("Runs out in \(Format.duration(runsOut)) at this rate", true) }
+        if runsOut < left { return (L("Runs out in \(Format.duration(runsOut)) at this rate"), true) }
         return (resetText, false)
     }
 
@@ -132,11 +132,11 @@ final class PlanCard: CardView {
 final class AgentsPage: CardPage {
     override var pageTint: NSColor { PageID.agents.tint }
     private let (titleLine, caption): (TextLine, TextLine)
-    private let running = Tile("Agents running"), cpu = Tile("CPU"), memory = Tile("Memory"), tokens = Tile("Tokens today")
+    private let running = Tile(L("Agents running")), cpu = Tile(L("CPU")), memory = Tile(L("Memory")), tokens = Tile(L("Tokens today"))
     private let planOff = CardView()
     private let planOffTitle = TextLine()
     private let planOffDetail = TextLine()
-    private lazy var planButton = ActionButton(title: "Show Limits", target: self, action: #selector(turnOnPlans))
+    private lazy var planButton = ActionButton(title: L("Show Limits"), target: self, action: #selector(turnOnPlans))
     /// Claude folders whose status line does not send limits to Wisp yet; checked with the limits.
     private var unconnected: [String] = []
     private let plansTitle = TextLine()
@@ -154,7 +154,7 @@ final class AgentsPage: CardPage {
     private let onSelect: (Selection?) -> Void
 
     init(delegate: AppDelegate, onSelect: @escaping (Selection?) -> Void) {
-        let title = TextLine(Toolbar.title("Coding Agents"))
+        let title = TextLine(Toolbar.title(L("Coding Agents")))
         (titleLine, caption) = (title, TextLine())
         self.onSelect = onSelect
         super.init(delegate: delegate)
@@ -169,12 +169,12 @@ final class AgentsPage: CardPage {
         super.loadView()
         for view in [running, cpu, memory, tokens, planOff, plansTitle, list] as [NSView] { canvas.addSubview(view) }
         for view in [planOffTitle, planOffDetail, planButton] as [NSView] { planOff.addSubview(view) }
-        planOffTitle.text = NSAttributedString(string: "Plan limits", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
+        planOffTitle.text = NSAttributedString(string: L("Plan limits"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
         planOffDetail.text = Theme.caption(PlanLimitsSetup.offDetail, color: Theme.inkSecondary)
-        plansTitle.text = cardTitle("Plan limits", "")
-        list.title.text = cardTitle("Running", "")
-        list.empty.text = Theme.caption("No coding agents running. Wisp knows Claude Code, Codex, Cursor Agent, Gemini CLI, Aider, OpenCode and more")
-        caption.text = Theme.caption("Looking for agents…")
+        plansTitle.text = cardTitle(L("Plan limits"), "")
+        list.title.text = cardTitle(L("Running"), "")
+        list.empty.text = Theme.caption(L("No coding agents running. Wisp knows Claude Code, Codex, Cursor Agent, Gemini CLI, Aider, OpenCode and more"))
+        caption.text = Theme.caption(L("Looking for agents…"))
         running.figure.format = { (String(format: "%.0f", $0), "") }
         tokens.set(text: "–")
         for tile in [running, cpu, memory, tokens] { tile.tint = PageID.agents.tint }
@@ -250,7 +250,7 @@ final class AgentsPage: CardPage {
                     self?.tokensBusy = false
                     self?.tokensAt = Date()
                     self?.tokens.set(text: Format.count(total))
-                    self?.tokens.set(note: "Claude Code, every account")
+                    self?.tokens.set(note: L("Claude Code, every account"))
                 }
             }
         }
@@ -266,12 +266,12 @@ final class AgentsPage: CardPage {
         running.set(note: kinds.prefix(2).joined(separator: " · "))
         let totalCPU = found.reduce(0) { $0 + $1.cpu }
         cpu.set(text: Style.appCPU(totalCPU, machine: machine, coreCount: table.coreCount))
-        cpu.set(note: found.max { $0.cpu < $1.cpu }.map { "Most in \(Self.folderName($0))" } ?? "")
+        cpu.set(note: found.max { $0.cpu < $1.cpu }.map { L("Most in \(Self.folderName($0))") } ?? "")
         let (value, unit) = DashboardView.split(Format.memory(found.reduce(0) { $0 + $1.memory }))
         memory.set(text: value, unit: unit)
-        memory.set(note: "\(processes) processes between them")
-        caption.text = Theme.caption(found.isEmpty ? "Nothing running" : "\(found.count) running · \(processes) processes")
-        list.title.text = cardTitle("Running", found.isEmpty ? "" : "\(found.count)")
+        memory.set(note: L("\(processes) processes between them"))
+        caption.text = Theme.caption(found.isEmpty ? L("Nothing running") : L("\(found.count) running · \(processes) processes"))
+        list.title.text = cardTitle(L("Running"), found.isEmpty ? "" : "\(found.count)")
         let home = NSHomeDirectory()
         let now = Date()
         let peak = max(found.map(\.cpu).max() ?? 0, 0.0001)
@@ -279,10 +279,10 @@ final class AgentsPage: CardPage {
         list.set(count: sorted.count) { [weak self] row, index in
             let agent = sorted[index]
             row.icon = AgentMark.image(agent.kind, size: 18, appearance: NSApp.effectiveAppearance)
-            row.name = agent.kind + (agent.host.map { $0 != agent.kind ? " in \($0)" : "" } ?? "") + "  \(agent.pid)"
+            row.name = agent.kind + (agent.host.map { $0 != agent.kind ? L(" in \($0)") : "" } ?? "") + "  \(agent.pid)"
             var note = agent.folder.flatMap { $0 == home ? nil : $0.replacingOccurrences(of: home, with: "~") } ?? ""
             if let start = agent.startDate { note += (note.isEmpty ? "" : " · ") + Format.duration(now.timeIntervalSince(start)) }
-            note += " · \(agent.processes.count) proc"
+            note += L(" · \(agent.processes.count) proc")
             row.note = note
             row.value = Style.appCPU(agent.cpu, machine: machine, coreCount: table.coreCount) + "  " + Format.memory(agent.memory)
             row.fraction = agent.cpu / peak
@@ -303,25 +303,25 @@ final class AgentsPage: CardPage {
             card.isHidden = index >= result.count
             if index < result.count { card.show(result[index], now: now) }
         }
-        plansTitle.text = cardTitle("Plan limits", result.isEmpty ? "" : "\(result.count)")
-        if result.isEmpty, unconnected.isEmpty { caption.text = Theme.caption("No Claude Code or Codex limits on this Mac yet") }
+        plansTitle.text = cardTitle(L("Plan limits"), result.isEmpty ? "" : "\(result.count)")
+        if result.isEmpty, unconnected.isEmpty { caption.text = Theme.caption(L("No Claude Code or Codex limits on this Mac yet")) }
         showPlanState()
         relayout()
     }
 
     private func showPlanState() {
         if !plansOn {
-            tokens.set(text: "Off")
-            tokens.set(note: "Turn on with plan limits")
-            planOffTitle.text = NSAttributedString(string: "Plan limits", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
+            tokens.set(text: L("Off"))
+            tokens.set(note: L("Turn on with plan limits"))
+            planOffTitle.text = NSAttributedString(string: L("Plan limits"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
             planOffDetail.text = Theme.caption(PlanLimitsSetup.offDetail, color: Theme.inkSecondary)
-            planButton.title = "Show Limits"
+            planButton.title = L("Show Limits")
         } else if !unconnected.isEmpty {
             let count = unconnected.count
-            planOffTitle.text = NSAttributedString(string: "Claude Code limits", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
-            planOffDetail.text = Theme.caption(count == 1 ? "One Claude Code setup does not send its limits to Wisp yet"
-                                                          : "\(count) Claude Code setups do not send their limits to Wisp yet", color: Theme.inkSecondary)
-            planButton.title = "Connect"
+            planOffTitle.text = NSAttributedString(string: L("Claude Code limits"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
+            planOffDetail.text = Theme.caption(count == 1 ? L("One Claude Code setup does not send its limits to Wisp yet")
+                                                          : L("\(count) Claude Code setups do not send their limits to Wisp yet"), color: Theme.inkSecondary)
+            planButton.title = L("Connect")
         }
     }
 
@@ -338,7 +338,7 @@ final class AgentsPage: CardPage {
         plansAt = .distantPast
         tokensAt = .distantPast
         tokens.set(text: "…")
-        tokens.set(note: "Counting")
+        tokens.set(note: L("Counting"))
         relayout()
     }
 }
@@ -347,7 +347,7 @@ final class AgentsPage: CardPage {
 /// puts the old status lines back. Codex needs nothing: it writes its limits to its logs.
 @MainActor
 enum PlanLimitsSetup {
-    static let offDetail = "Adds Wisp to Claude Code's status line and reads Codex's logs. No sign-ins, nothing sent"
+    static let offDetail = L("Adds Wisp to Claude Code's status line and reads Codex's logs. No sign-ins, nothing sent")
 
     /// The `wisp` helper inside this copy of the app; nil when running outside a bundle.
     static var helper: String? {

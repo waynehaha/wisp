@@ -19,8 +19,8 @@ final class DashboardBuilder: DrawnView {
     private let stage = CardView()
     private let holder = Holder()
     let preview: DashboardView
-    private let paletteTitle = TextLine(NSAttributedString(string: "Blocks", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink]))
-    private let paletteNote = TextLine(Theme.caption("Drag one onto the preview, or click to add it."))
+    private let paletteTitle = TextLine(NSAttributedString(string: L("Blocks"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink]))
+    private let paletteNote = TextLine(Theme.caption(L("Drag one onto the preview, or click to add it.")))
     private var chips: [PaletteChip] = []
     private let removeButton = RemoveButton()
     private let indicator = CAShapeLayer()
@@ -82,7 +82,7 @@ final class DashboardBuilder: DrawnView {
         refreshChips()
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("Dashboard layout")
+        setAccessibilityLabel(L("Dashboard layout"))
         if ProcessInfo.processInfo.environment["WISP_BUILDER_DEMO"] != nil { scheduleDemo() }
     }
 
@@ -230,7 +230,7 @@ final class DashboardBuilder: DrawnView {
         }
         let rect = scaled(view.frame)
         removeButton.frame = NSRect(x: rect.maxX - 13, y: rect.minY - 7, width: 20, height: 20)
-        removeButton.label = "Remove \(hovered.title)"
+        removeButton.label = L("Remove \(hovered.title)")
         removeButton.isHidden = false
     }
 
@@ -571,7 +571,7 @@ final class DashboardBuilder: DrawnView {
         if let block = block(at: point) { return menu(for: block) }
         if let chip = chip(at: point), !chip.inUse {
             let menu = NSMenu()
-            menu.addItem(MenuAction("Add to Dashboard") { [weak self] in self?.add(chip.block) }.item)
+            menu.addItem(MenuAction(L("Add to Dashboard")) { [weak self] in self?.add(chip.block) }.item)
             return menu
         }
         return nil
@@ -580,15 +580,15 @@ final class DashboardBuilder: DrawnView {
     private func menu(for block: DashboardBlock) -> NSMenu {
         let menu = NSMenu()
         let index = layoutBlocks.firstIndex(of: block) ?? 0
-        let up = MenuAction("Move Up") { [weak self] in self?.move(block, by: -1) }.item
+        let up = MenuAction(L("Move Up")) { [weak self] in self?.move(block, by: -1) }.item
         up.isEnabled = index > 0
-        let down = MenuAction("Move Down") { [weak self] in self?.move(block, by: 1) }.item
+        let down = MenuAction(L("Move Down")) { [weak self] in self?.move(block, by: 1) }.item
         down.isEnabled = index < layoutBlocks.count - 1
         menu.autoenablesItems = false
         menu.addItem(up)
         menu.addItem(down)
         menu.addItem(.separator())
-        menu.addItem(MenuAction("Remove") { [weak self] in self?.remove(block) }.item)
+        menu.addItem(MenuAction(L("Remove")) { [weak self] in self?.remove(block) }.item)
         return menu
     }
 
@@ -627,16 +627,16 @@ final class DashboardBuilder: DrawnView {
             element.block = block
             element.setAccessibilityRole(.button)
             element.setAccessibilityLabel(block.title)
-            element.setAccessibilityHelp("Block \(index + 1) of \(blocks.count) in the dashboard")
+            element.setAccessibilityHelp(L("Block \(index + 1) of \(blocks.count) in the dashboard"))
             element.setAccessibilityParent(self)
             var actions: [NSAccessibilityCustomAction] = []
             if index > 0 {
-                actions.append(NSAccessibilityCustomAction(name: "Move up") { [weak self] in self?.move(block, by: -1); return true })
+                actions.append(NSAccessibilityCustomAction(name: L("Move up")) { [weak self] in self?.move(block, by: -1); return true })
             }
             if index < blocks.count - 1 {
-                actions.append(NSAccessibilityCustomAction(name: "Move down") { [weak self] in self?.move(block, by: 1); return true })
+                actions.append(NSAccessibilityCustomAction(name: L("Move down")) { [weak self] in self?.move(block, by: 1); return true })
             }
-            actions.append(NSAccessibilityCustomAction(name: "Remove") { [weak self] in self?.remove(block); return true })
+            actions.append(NSAccessibilityCustomAction(name: L("Remove")) { [weak self] in self?.remove(block); return true })
             element.setAccessibilityCustomActions(actions)
             return element
         }
@@ -774,7 +774,7 @@ final class PaletteChip: DrawnView {
         (block.detail as NSString).draw(with: NSRect(x: 44, y: 22, width: room, height: 15), options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
                                         attributes: [.font: Theme.sans(11), .foregroundColor: Theme.inkSecondary.withAlphaComponent(alpha), .paragraphStyle: paragraph])
         if inUse {
-            let text = NSAttributedString(string: "Shown", attributes: [.font: Theme.sans(11), .foregroundColor: Theme.inkSecondary])
+            let text = NSAttributedString(string: L("Shown"), attributes: [.font: Theme.sans(11), .foregroundColor: Theme.inkSecondary])
             let size = text.size()
             IconTile.glyph("checkmark", tint: Theme.inkSecondary, size: 12, appearance: effectiveAppearance)
                 .draw(in: NSRect(x: bounds.width - 14 - size.width - 16, y: (bounds.height - 12) / 2, width: 12, height: 12),
@@ -790,7 +790,7 @@ final class PaletteChip: DrawnView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .button }
-    override func accessibilityLabel() -> String? { inUse ? "\(block.title), shown" : "Add \(block.title)" }
+    override func accessibilityLabel() -> String? { inUse ? L("\(block.title), shown") : L("Add \(block.title)") }
     override func accessibilityHelp() -> String? { block.detail }
     override func isAccessibilityEnabled() -> Bool { !inUse }
     override func accessibilityPerformPress() -> Bool {
@@ -803,7 +803,7 @@ final class PaletteChip: DrawnView {
 /// The small round button on a hovered block in the preview.
 final class RemoveButton: DrawnView {
     var onPress: (() -> Void)?
-    var label = "Remove"
+    var label = L("Remove")
     private var pressed = false { didSet { needsDisplay = true } }
 
     override func draw(_ dirtyRect: NSRect) {

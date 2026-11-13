@@ -110,7 +110,7 @@ final class DiskBar: BitmapView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .group }
-    override func accessibilityLabel() -> String? { "Startup disk" }
+    override func accessibilityLabel() -> String? { L("Startup disk") }
     override func accessibilityValue() -> Any? {
         slices.map { "\($0.category.title) \(Format.bytes($0.size))" }.joined(separator: ", ")
     }
@@ -182,7 +182,7 @@ final class DiskLegend: BitmapView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .list }
-    override func accessibilityLabel() -> String? { "Kinds of storage" }
+    override func accessibilityLabel() -> String? { L("Kinds of storage") }
     override func accessibilityValue() -> Any? { items.map { "\($0.category.title) \($0.value)" }.joined(separator: ", ") }
 }
 
@@ -361,8 +361,8 @@ final class StorageList: BitmapView {
     override func menu(for event: NSEvent) -> NSMenu? {
         guard let index = index(at: convert(event.locationInWindow, from: nil)), let path = rows[index].path else { return nil }
         let menu = NSMenu()
-        menu.addItem(ActionItem("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) })
-        menu.addItem(ActionItem("Copy Path") {
+        menu.addItem(ActionItem(L("Reveal in Finder")) { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) })
+        menu.addItem(ActionItem(L("Copy Path")) {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(path, forType: .string)
         })
@@ -395,7 +395,7 @@ final class SpaceChart: BitmapView {
         let known = values.enumerated().filter { !$0.element.isNaN }
         // A few hours of readings are a sliver at the right edge; wait for more.
         guard known.count >= 6 else {
-            let text = Theme.caption("Wisp records free space once an hour; the chart fills in over the next days", size: 9.5)
+            let text = Theme.caption(L("Wisp records free space once an hour; the chart fills in over the next days"), size: 9.5)
             let size = text.size()
             text.draw(at: NSPoint(x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2))
             return
@@ -459,9 +459,9 @@ final class SpaceChart: BitmapView {
             text.draw(at: NSPoint(x: x, y: max(rect.minY - 6, point.y - 24)))
             lastLabelEnd = x + size.width
         }
-        let oldest = Theme.caption("30 days ago", size: 9)
+        let oldest = Theme.caption(L("30 days ago"), size: 9)
         oldest.draw(at: NSPoint(x: rect.minX, y: rect.maxY + 8))
-        let now = Theme.caption("Now", size: 9)
+        let now = Theme.caption(L("Now"), size: 9)
         now.draw(at: NSPoint(x: rect.maxX - now.size().width, y: rect.maxY + 8))
 
         if let index = hoverIndex, values.indices.contains(index), !values[index].isNaN {
@@ -469,8 +469,8 @@ final class SpaceChart: BitmapView {
             Theme.inkTertiary.withAlphaComponent(0.5).setFill()
             NSRect(x: x, y: rect.minY, width: 1, height: rect.height).fill()
             let hours = values.count - 1 - index
-            let when = hours < 24 ? "\(hours) h ago" : "\(hours / 24) d ago"
-            let text = "\(when)   \(Format.bytes(values[index])) free" as NSString
+            let when = hours < 24 ? L("\(hours) h ago") : L("\(hours / 24) d ago")
+            let text = L("\(when)   \(Format.bytes(values[index])) free") as NSString
             let attributes: [NSAttributedString.Key: Any] = [.font: Theme.figure(11, .medium), .foregroundColor: NSColor.white]
             let size = text.size(withAttributes: attributes)
             var box = NSRect(x: x + 8, y: rect.minY, width: size.width + 16, height: 22)
@@ -504,5 +504,5 @@ final class SpaceChart: BitmapView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .image }
-    override func accessibilityLabel() -> String? { "Free space, last 30 days" }
+    override func accessibilityLabel() -> String? { L("Free space, last 30 days") }
 }

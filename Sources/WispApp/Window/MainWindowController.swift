@@ -7,23 +7,23 @@ enum PageID: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .overview: return "Overview"
-        case .apps: return "Apps"
-        case .cpu: return "CPU"
-        case .memory: return "Memory"
+        case .overview: return L("Overview")
+        case .apps: return L("Apps")
+        case .cpu: return L("CPU")
+        case .memory: return L("Memory")
         case .energy: return PowerPage.title
-        case .disk: return "Storage"
-        case .network: return "Network"
-        case .gpu: return "GPU"
-        case .neural: return "Neural Engine"
-        case .sound: return "Sound"
-        case .bluetooth: return "Bluetooth"
-        case .sensors: return "Sensors"
-        case .ports: return "Projects"
-        case .docker: return "Containers"
-        case .agents: return "Coding Agents"
-        case .startup: return "Login & Background"
-        case .settings: return "Settings"
+        case .disk: return L("Storage")
+        case .network: return L("Network")
+        case .gpu: return L("GPU")
+        case .neural: return L("Neural Engine")
+        case .sound: return L("Sound")
+        case .bluetooth: return L("Bluetooth")
+        case .sensors: return L("Sensors")
+        case .ports: return L("Projects")
+        case .docker: return L("Containers")
+        case .agents: return L("Coding Agents")
+        case .startup: return L("Login & Background")
+        case .settings: return L("Settings")
         }
     }
 
@@ -51,8 +51,8 @@ enum PageID: String, CaseIterable {
 
     static let sections: [(String?, [PageID])] = [
         (nil, [.overview, .apps]),
-        ("Machine", [.cpu, .memory, .gpu, .neural, .energy, .disk, .network, .sound, .bluetooth, .sensors, .startup]),
-        ("Developer", [.ports, .docker, .agents]),
+        (L("Machine"), [.cpu, .memory, .gpu, .neural, .energy, .disk, .network, .sound, .bluetooth, .sensors, .startup]),
+        (L("Developer"), [.ports, .docker, .agents]),
     ]
 }
 
@@ -545,21 +545,21 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
         switch id {
         case .overview: return OverviewPage(delegate: delegate, open: { [weak self] page in self?.show(page) }, select: select)
         case .apps: return AppsPage(delegate: delegate, onSelect: select)
-        case .cpu: return CPUPage(title: "CPU", metric: .cpu, delegate: delegate, onSelect: select)
-        case .memory: return MemoryPage(title: "Memory", metric: .memory, delegate: delegate, onSelect: select)
-        case .disk: return StoragePage(title: "Disk", metric: .diskRead, delegate: delegate, onSelect: select)
-        case .network: return NetworkPage(title: "Network", metric: .networkIn, delegate: delegate, onSelect: select)
-        case .gpu: return GPUPage(title: "GPU", metric: .gpu, delegate: delegate, onSelect: select)
+        case .cpu: return CPUPage(title: L("CPU"), metric: .cpu, delegate: delegate, onSelect: select)
+        case .memory: return MemoryPage(title: L("Memory"), metric: .memory, delegate: delegate, onSelect: select)
+        case .disk: return StoragePage(title: L("Disk"), metric: .diskRead, delegate: delegate, onSelect: select)
+        case .network: return NetworkPage(title: L("Network"), metric: .networkIn, delegate: delegate, onSelect: select)
+        case .gpu: return GPUPage(title: L("GPU"), metric: .gpu, delegate: delegate, onSelect: select)
         case .energy: return PowerPage(delegate: delegate, onSelect: select)
         case .sensors: return SensorsCardPage(delegate: delegate)
-        case .neural: return NeuralPage(title: "Neural Engine", metric: .power, delegate: delegate, onSelect: select)
+        case .neural: return NeuralPage(title: L("Neural Engine"), metric: .power, delegate: delegate, onSelect: select)
         case .sound: return SoundPage(delegate: delegate)
         case .bluetooth: return BluetoothPage(delegate: delegate)
         case .ports:
             let page = ProjectsPage(delegate: delegate)
             page.onSelect = select
             return page
-        case .docker: return ContainersPage(title: "Containers", metric: .cpu, delegate: delegate, onSelect: select)
+        case .docker: return ContainersPage(title: L("Containers"), metric: .cpu, delegate: delegate, onSelect: select)
         case .agents: return AgentsPage(delegate: delegate, onSelect: select)
         case .startup: return StartupPage(delegate: delegate, onSelect: select)
         case .settings: return SettingsPage(delegate: delegate)

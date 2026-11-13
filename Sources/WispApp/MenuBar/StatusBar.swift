@@ -82,10 +82,10 @@ final class StatusBar {
 
     private func showMenu(_ button: NSStatusBarButton) {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Open Wisp", action: #selector(openWindow), keyEquivalent: "").target = self
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
+        menu.addItem(withTitle: L("Open Wisp"), action: #selector(openWindow), keyEquivalent: "").target = self
+        menu.addItem(withTitle: L("Settings…"), action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Wisp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: L("Quit Wisp"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         if let item = items.first(where: { $0.statusItem.button === button })?.statusItem ?? fallback {
             item.menu = menu
             button.performClick(nil)

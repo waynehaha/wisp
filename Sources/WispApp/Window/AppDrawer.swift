@@ -194,7 +194,7 @@ final class ColumnsCard: CardView {
 final class InsideCard: CardView {
     let title = TextLine()
     let headline = TextLine()
-    let toggle = Segmented(["Memory", "CPU"])
+    let toggle = Segmented([L("Memory"), L("CPU")])
     private let bar = StackBar()
     private var rows: [PartRow] = []
     private let footnote = TextLine()
@@ -216,7 +216,7 @@ final class InsideCard: CardView {
         radius = 14
         for view in [title, headline, toggle, bar, footnote] as [NSView] { addSubview(view) }
         toggle.onChange = { [weak self] _ in self?.refresh() }
-        footnote.text = Theme.caption("Browsers do not say which tab each process draws, so tabs count together", size: 9)
+        footnote.text = Theme.caption(L("Browsers do not say which tab each process draws, so tabs count together"), size: 9)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -227,22 +227,22 @@ final class InsideCard: CardView {
         let byCPU = toggle.selected == 1
         let total = parts.reduce(0.0) { $0 + (byCPU ? $1.cpu : Double($1.memory)) }
         let sorted = parts.sorted { byCPU ? $0.cpu > $1.cpu : $0.memory > $1.memory }
-        title.text = NSAttributedString(string: "Inside \(appName)", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
+        title.text = NSAttributedString(string: L("Inside \(appName)"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
         if let top = sorted.first, total > 0 {
             let share = (byCPU ? top.cpu : Double(top.memory)) / total
-            let what = byCPU ? "its CPU" : "its memory"
+            let what = byCPU ? L("its CPU") : L("its memory")
             func line(_ name: String) -> NSAttributedString {
-                let text = NSMutableAttributedString(string: "\(name) use", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
-                if top.processes == 1 && top.name != "Tabs" && top.name != "Extensions" { text.mutableString.append("s") }
+                let text = NSMutableAttributedString(string: L("\(name) use"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink])
+                if top.processes == 1 && top.name != "Tabs" && top.name != "Extensions" { text.mutableString.append(L10n.pluralSuffix) }
                 text.append(NSAttributedString(string: " \(Format.percent(share))", attributes: [.font: Theme.figure(15, .semibold), .foregroundColor: Self.colors[top.kind] ?? Theme.ink]))
-                text.append(NSAttributedString(string: " of \(what)", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink]))
+                text.append(NSAttributedString(string: L(" of \(what)"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.ink]))
                 return text
             }
             // A process named like com.apple.Virtualization.VirtualMachine shortens to its last part.
             let short = top.name.split(separator: ".").last.map(String.init) ?? top.name
-            headline.variants = short == top.name ? [line(top.name)] : [line(top.name), line(short)]
+            headline.variants = short == top.name ? [line(L10n.string(top.name))] : [line(L10n.string(top.name)), line(L10n.string(short))]
         } else {
-            headline.variants = [NSAttributedString(string: "Nothing measured yet", attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.inkSecondary])]
+            headline.variants = [NSAttributedString(string: L("Nothing measured yet"), attributes: [.font: Theme.sans(15, .medium), .foregroundColor: Theme.inkSecondary])]
         }
         bar.segments = sorted.map { ((byCPU ? $0.cpu : Double($0.memory)) / max(total, 1e-9), Self.colors[$0.kind] ?? Theme.inkTertiary) }
         while rows.count < sorted.count {
@@ -255,8 +255,8 @@ final class InsideCard: CardView {
             guard index < sorted.count else { continue }
             let part = sorted[index]
             let value = byCPU ? part.cpu : Double(part.memory)
-            row.set(name: part.name,
-                    note: part.processes > 1 ? "\(part.processes) processes · \(byCPU ? Format.percent(part.cpu / Double(part.processes)) : Format.memory(part.memory / UInt64(part.processes))) each" : "",
+            row.set(name: L10n.string(part.name),
+                    note: part.processes > 1 ? L("\(part.processes) processes · \(byCPU ? Format.percent(part.cpu / Double(part.processes)) : Format.memory(part.memory / UInt64(part.processes))) each") : "",
                     share: total > 0 ? Format.percent(value / total) : "–",
                     value: byCPU ? Format.percent(part.cpu) : Format.memory(part.memory),
                     symbol: Self.symbols[part.kind] ?? "circle", tint: Self.colors[part.kind] ?? Theme.inkTertiary)
@@ -378,17 +378,17 @@ final class AppDrawer: NSView {
     private let scroll = NSScrollView()
     private let content = Content()
 
-    private let memory = FigureTile("Memory", symbol: "memorychip", tint: PageID.memory.tint, big: true)
-    private let cpu = FigureTile("CPU", symbol: "cpu", tint: PageID.cpu.tint, big: true)
-    private let power = FigureTile("Power", symbol: "bolt.fill", tint: PageID.energy.tint, big: false)
-    private let gpu = FigureTile("GPU", symbol: "cube.fill", tint: PageID.gpu.tint, big: false)
-    private let disk = FigureTile("Disk", symbol: "internaldrive", tint: PageID.disk.tint, big: false)
-    private let network = FigureTile("Network", symbol: "globe", tint: PageID.network.tint, big: false)
+    private let memory = FigureTile(L("Memory"), symbol: "memorychip", tint: PageID.memory.tint, big: true)
+    private let cpu = FigureTile(L("CPU"), symbol: "cpu", tint: PageID.cpu.tint, big: true)
+    private let power = FigureTile(L("Power"), symbol: "bolt.fill", tint: PageID.energy.tint, big: false)
+    private let gpu = FigureTile(L("GPU"), symbol: "cube.fill", tint: PageID.gpu.tint, big: false)
+    private let disk = FigureTile(L("Disk"), symbol: "internaldrive", tint: PageID.disk.tint, big: false)
+    private let network = FigureTile(L("Network"), symbol: "globe", tint: PageID.network.tint, big: false)
     private let strip = ColumnsCard()
     private let inside = InsideCard()
     private let historyCard = CardView()
     private let historyTitle = TextLine()
-    private let historyToggle = Segmented(["CPU", "Memory"])
+    private let historyToggle = Segmented([L("CPU"), L("Memory")])
     private let chart = TimeChart()
     private let factsCard = CardView()
     private let storageSection = AppStorageSection()
@@ -433,7 +433,7 @@ final class AppDrawer: NSView {
 
         icon.imageScaling = .scaleProportionallyUpOrDown
         for view in [icon, name, kind, close] as [NSView] { header.addSubview(view) }
-        close.toolTip = "Close (Esc)"
+        close.toolTip = L("Close (Esc)")
         close.onPress = { [weak self] in self?.onClose?() }
         rule.fill = Theme.rule
         rule.stroke = .clear
@@ -450,14 +450,14 @@ final class AppDrawer: NSView {
         memory.showsMeter = true
         cpu.showsMeter = true
 
-        historyTitle.text = NSAttributedString(string: "Last Hour", attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
+        historyTitle.text = NSAttributedString(string: L("Last Hour"), attributes: [.font: Theme.sans(13, .semibold), .foregroundColor: Theme.ink])
         historyCard.radius = 14
         for view in [historyTitle, historyToggle, chart] as [NSView] { historyCard.addSubview(view) }
         historyToggle.onChange = { [weak self] _ in self?.fillChart() }
         chart.step = 60
         factsCard.radius = 14
         commandCard.radius = 14
-        commandTitle.text = Theme.caption("Command")
+        commandTitle.text = Theme.caption(L("Command"))
         commandLine.font = Theme.mono(10.5, .regular)
         commandLine.textColor = Theme.inkSecondary
         commandLine.isSelectable = true
@@ -579,12 +579,12 @@ final class AppDrawer: NSView {
         switch selection {
         case .app(let id):
             guard let app = table.app(id) else {
-                kind.text = Theme.caption("Not running", size: 9.5)
+                kind.text = Theme.caption(L("Not running"), size: 9.5)
                 return
             }
             pids = app.pids
             icon.image = Icons.icon(for: app)
-            setTitle(app.name, (app.kind == .app ? "App" : app.kind == .system ? "Part of macOS" : "Command-line tool") + " · \(app.processCount) processes")
+            setTitle(app.name, (app.kind == .app ? L("App") : app.kind == .system ? L("Part of macOS") : L("Command-line tool")) + L(" · \(app.processCount) processes"))
             fill(memory: app.memory, total: total, cpu: app.cpu, cores: table.coreCount, machine: machine,
                  watts: app.watts, disk: app.diskPerSecond, net: table.networkMeasured ? app.networkPerSecond : nil)
             inside.isHidden = app.processCount < 2
@@ -592,13 +592,13 @@ final class AppDrawer: NSView {
             refreshInside(app, table: table)
         case .process(let pid):
             guard let row = table.processes.first(where: { $0.pid == pid }) else {
-                kind.text = Theme.caption("Exited", size: 9.5)
+                kind.text = Theme.caption(L("Exited"), size: 9.5)
                 return
             }
             pids = [pid]
             let group = table.app(row.groupID)
             icon.image = group.map { Icons.icon(for: $0) }
-            setTitle(row.name, "Process \(row.pid)" + (group.map { " in \($0.name)" } ?? ""))
+            setTitle(row.name, L("Process \(row.pid)") + (group.map { L(" in \($0.name)") } ?? ""))
             fill(memory: row.memory, total: total, cpu: row.cpu, cores: table.coreCount, machine: machine, watts: row.watts,
                  disk: row.diskReadPerSecond + row.diskWritePerSecond,
                  net: table.networkMeasured ? row.networkInPerSecond + row.networkOutPerSecond : nil)
@@ -621,11 +621,11 @@ final class AppDrawer: NSView {
         let (memValue, memUnit) = DashboardView.split(Format.memory(bytes))
         memory.figure.show(memValue, unit: memUnit)
         memory.setMeter(Double(bytes) / max(total, 1))
-        memory.note.text = NSAttributedString(string: "\(Format.percent(Double(bytes) / max(total, 1))) of \(Format.memory(total))",
+        memory.note.text = NSAttributedString(string: L("\(Format.percent(Double(bytes) / max(total, 1))) of \(Format.memory(total))"),
                                               attributes: [.font: Theme.sans(11.5), .foregroundColor: Theme.inkSecondary])
         cpu.figure.show(Style.appCPU(load, machine: machine, coreCount: cores).replacingOccurrences(of: "%", with: ""), unit: "%")
         cpu.setMeter(load / Double(max(cores, 1)))
-        cpu.note.text = NSAttributedString(string: String(format: "%.1f of %d cores", load, cores),
+        cpu.note.text = NSAttributedString(string: String(format: L("%.1f of %d cores"), load, cores),
                                            attributes: [.font: Theme.sans(11.5), .foregroundColor: Theme.inkSecondary])
         let (w, wu) = watts > 0.005 ? DashboardView.split(Format.watts(watts)) : ("–", "")
         power.figure.show(w, unit: wu)
@@ -635,7 +635,7 @@ final class AppDrawer: NSView {
             let (n, nu) = net > 0 ? DashboardView.split(Format.rate(net)) : ("–", "")
             network.figure.show(n, unit: nu)
         } else {
-            network.figure.show("Off")
+            network.figure.show(L("Off"))
         }
     }
 
@@ -693,14 +693,14 @@ final class AppDrawer: NSView {
         guard let id else { return }
         if historyToggle.selected == 0 {
             chart.primaryColor = PageID.cpu.tint
-            chart.names = ("CPU", "")
+            chart.names = (L("CPU"), "")
             chart.format = { [weak self] value in
                 Style.appCPU(Double(value), machine: self?.delegate.settings.cpuOfMachine ?? false, coreCount: self?.delegate.table.coreCount ?? 1)
             }
             chart.primary = history.app(id, .cpu, minutes: 60)
         } else {
             chart.primaryColor = PageID.memory.tint
-            chart.names = ("Memory", "")
+            chart.names = (L("Memory"), "")
             chart.format = { Format.memory(Double($0)) }
             chart.primary = history.app(id, .memory, minutes: 60)
         }
@@ -723,8 +723,8 @@ final class AppDrawer: NSView {
 
     private func loadAppFacts(_ app: AppGroup) {
         var rows: [(String, String)] = []
-        if let path = app.bundlePath { rows.append(("Location", path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
-        if let bundleID = app.bundleIdentifier { rows.append(("Bundle ID", bundleID)) }
+        if let path = app.bundlePath { rows.append((L("Location"), path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
+        if let bundleID = app.bundleIdentifier { rows.append((L("Bundle ID"), bundleID)) }
         setFacts(rows)
         guard let main = app.pids.min() else { return }
         detailsToken += 1
@@ -748,12 +748,12 @@ final class AppDrawer: NSView {
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.detailsToken == token else { return }
                 var rows: [(String, String)] = []
-                if let parent { rows.append(("Parent", "\(parent.name) (\(parent.pid))")) }
-                if let user = details.user { rows.append(("User", user)) }
-                if let start = row?.startDate { rows.append(("Started", start.formatted(date: .abbreviated, time: .shortened))) }
-                if let row, row.readable { rows.append(("CPU time", Format.duration(row.cpuTime))) }
-                if let path = row?.path { rows.append(("Executable", path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
-                if let cwd = details.workingDirectory { rows.append(("Folder", cwd.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
+                if let parent { rows.append((L("Parent"), "\(parent.name) (\(parent.pid))")) }
+                if let user = details.user { rows.append((L("User"), user)) }
+                if let start = row?.startDate { rows.append((L("Started"), start.formatted(date: .abbreviated, time: .shortened))) }
+                if let row, row.readable { rows.append((L("CPU time"), Format.duration(row.cpuTime))) }
+                if let path = row?.path { rows.append((L("Executable"), path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
+                if let cwd = details.workingDirectory { rows.append((L("Folder"), cwd.replacingOccurrences(of: NSHomeDirectory(), with: "~"))) }
                 if let signature = details.signature { rows += Self.signatureRows(signature) }
                 self.commandLine.stringValue = details.arguments.joined(separator: " ")
                 self.setFacts(rows)
@@ -762,10 +762,10 @@ final class AppDrawer: NSView {
     }
 
     private static func signatureRows(_ s: ProcessDetails.Signature) -> [(String, String)] {
-        var rows = [("Signed by", s.authority + (s.valid ? "" : ", not valid"))]
-        if let team = s.teamID { rows.append(("Team ID", team)) }
-        rows.append(("Sandbox", s.sandboxed ? "Yes" : "No"))
-        rows.append(("Hardened", s.hardenedRuntime ? "Yes" : "No"))
+        var rows = [(L("Signed by"), s.authority + (s.valid ? "" : L(", not valid")))]
+        if let team = s.teamID { rows.append((L("Team ID"), team)) }
+        rows.append((L("Sandbox"), s.sandboxed ? L("Yes") : L("No")))
+        rows.append((L("Hardened"), s.hardenedRuntime ? L("Yes") : L("No")))
         return rows
     }
 
@@ -777,13 +777,13 @@ final class AppDrawer: NSView {
         var canQuit = true
         if case .app(let id) = selection, let app = delegate.table.app(id) { canQuit = app.kind != .system }
         let finder = GlassPill("", symbol: "folder")
-        finder.toolTip = "Show in Finder"
+        finder.toolTip = L("Show in Finder")
         finder.onPress = { [weak self] in self?.reveal() }
         buttons.append(finder)
         if canQuit {
-            let force = GlassPill("Force Quit…", kind: .destructive)
+            let force = GlassPill(L("Force Quit…"), kind: .destructive)
             force.onPress = { [weak self] in self?.forceQuit() }
-            let quit = GlassPill("Quit", symbol: "power", kind: .primary)
+            let quit = GlassPill(L("Quit"), symbol: "power", kind: .primary)
             quit.onPress = { [weak self] in self?.quit() }
             buttons += [force, quit]
         }
@@ -812,14 +812,14 @@ final class AppDrawer: NSView {
             label = app.name
         case .process(let pid):
             pids = [pid]
-            label = delegate.table.processes.first { $0.pid == pid }?.name ?? "process \(pid)"
+            label = delegate.table.processes.first { $0.pid == pid }?.name ?? L("process \(pid)")
         case nil: return
         }
         let alert = NSAlert()
-        alert.messageText = "Force quit \(label)?"
-        alert.informativeText = "It stops at once and loses anything it has not saved."
-        alert.addButton(withTitle: "Force Quit")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("Force quit \(label)?")
+        alert.informativeText = L("It stops at once and loses anything it has not saved.")
+        alert.addButton(withTitle: L("Force Quit"))
+        alert.addButton(withTitle: L("Cancel"))
         alert.buttons.first?.hasDestructiveAction = true
         alert.beginSheetModal(for: window) { response in
             if response == .alertFirstButtonReturn { for pid in pids { kill(pid, SIGKILL) } }

@@ -50,9 +50,9 @@ final class AppNetworkSection: NSView {
             card.radius = 14
             addSubview(card)
         }
-        usageTitle.text = Self.title("Data used")
+        usageTitle.text = Self.title(L("Data used"))
         for view in [usageTitle, usageNote] as [NSView] { usageCard.addSubview(view) }
-        for name in ["Today", "This week", "This month"] {
+        for name in [L("Today"), L("This week"), L("This month")] {
             let label = TextLine(), figure = BigNumber(), note = TextLine()
             label.text = NSAttributedString(string: name, attributes: [.font: Theme.sans(11), .foregroundColor: Theme.inkSecondary])
             figure.font = Theme.figure(14)
@@ -61,9 +61,9 @@ final class AppNetworkSection: NSView {
             for view in [label, figure, note] as [NSView] { usageCard.addSubview(view) }
             usageColumns.append((label, figure, note))
         }
-        connectionsTitle.text = Self.title("Connections")
+        connectionsTitle.text = Self.title(L("Connections"))
         connectionsMeta.alignment = .right
-        listeningLabel.text = NSAttributedString(string: "Listening", attributes: [.font: Theme.sans(11, .medium), .foregroundColor: Theme.inkSecondary])
+        listeningLabel.text = NSAttributedString(string: L("Listening"), attributes: [.font: Theme.sans(11, .medium), .foregroundColor: Theme.inkSecondary])
         for view in [connectionsTitle, connectionsMeta, listeningLabel, moreLine, emptyLine] as [NSView] { connectionsCard.addSubview(view) }
     }
 
@@ -92,7 +92,7 @@ final class AppNetworkSection: NSView {
 
         let width = inner - 36
         usageTitle.frame = NSRect(x: 18, y: 18, width: 120, height: 18)
-        usageNote.frame = NSRect(x: 18 + 110, y: 20, width: width - 110, height: 15)
+        usageNote.frame = NSRect(x: 18 + 132, y: 20, width: max(0, width - 132), height: 15)
         usageNote.alignment = .right
         let column = width / 3
         for (index, parts) in usageColumns.enumerated() {
@@ -103,7 +103,7 @@ final class AppNetworkSection: NSView {
         }
 
         connectionsTitle.frame = NSRect(x: 18, y: 18, width: 120, height: 18)
-        connectionsMeta.frame = NSRect(x: 18 + 110, y: 20, width: width - 110, height: 15)
+        connectionsMeta.frame = NSRect(x: 18 + 132, y: 20, width: max(0, width - 132), height: 15)
         var y: CGFloat = 48
         for (index, row) in rows.enumerated() {
             if index == shownHosts {
@@ -219,10 +219,10 @@ final class AppNetworkSection: NSView {
     /// Says what the totals cover: counting starts when Wisp first measured, and
     /// without background tracking only while a network view is open.
     static func sinceNote(_ since: Date?, background: Bool, monthStart: Date) -> String {
-        guard let since else { return "Counted while Wisp measures" }
+        guard let since else { return L("Counted while Wisp measures") }
         let when = since.formatted(.dateTime.day().month(.abbreviated))
-        let prefix = since > monthStart ? "Since \(when), " : ""
-        return prefix + (background ? "while Wisp runs" : "while a network view is open")
+        let prefix = since > monthStart ? L("Since \(when), ") : ""
+        return prefix + (background ? L("while Wisp runs") : L("while a network view is open"))
     }
 
     private func show(groups: [HostGroup], listening: [AppConnection], total: Int, measured: Bool, names: [Int32: String]) {
@@ -253,13 +253,13 @@ final class AppNetworkSection: NSView {
         let more = groups.count - hosts.count
         let moreChanged = hasMore != (more > 0)
         hasMore = more > 0
-        moreLine.text = Theme.caption(more == 1 ? "1 more host" : "\(more) more hosts", size: 9.5)
+        moreLine.text = Theme.caption(more == 1 ? L("1 more host") : L("\(more) more hosts"), size: 9.5)
         if hosts.isEmpty, rows.first?.isHidden ?? true {
             connectionsMeta.text = NSAttributedString()
         } else {
-            connectionsMeta.text = Theme.caption("\(total) open · \(groups.count) \(groups.count == 1 ? "host" : "hosts")", size: 9.5)
+            connectionsMeta.text = Theme.caption(L("\(total) open · \(groups.count) \(groups.count == 1 ? L("host") : L("hosts"))"), size: 9.5)
         }
-        emptyLine.text = Theme.caption(hosts.isEmpty ? "No connections to other hosts" : "", size: 10)
+        emptyLine.text = Theme.caption(hosts.isEmpty ? L("No connections to other hosts") : "", size: 10)
         let changed = shownHosts != hosts.count || shownListening != listen.count || moreChanged
         shownHosts = hosts.count
         shownListening = listen.count
@@ -304,15 +304,15 @@ final class ConnectionRow: DrawnView, SelfAuditing {
     func set(host: HostGroup, names: [Int32: String], measured: Bool) {
         var parts: [String] = []
         let incoming = host.connections.contains { $0.direction == .incoming }
-        if incoming { parts.append(host.connections.allSatisfy { $0.direction == .incoming } ? "Incoming" : "In and out") }
+        if incoming { parts.append(host.connections.allSatisfy { $0.direction == .incoming } ? L("Incoming") : L("In and out")) }
         parts.append(Self.ports(host.connections.compactMap { c in c.remote.map { ($0.port, c.isUDP) } }))
         let tcp = host.connections.filter { !$0.isUDP }
         let open = tcp.filter { $0.state == "Open" }.count
         let other = tcp.count - open
-        if open > 0 { parts.append("\(open) open") }
-        if other > 0 { parts.append(tcp.count == other && other == 1 ? (tcp.first?.state.lowercased() ?? "") : "\(other) closing") }
+        if open > 0 { parts.append(L("\(open) open")) }
+        if other > 0 { parts.append(tcp.count == other && other == 1 ? (tcp.first?.state.lowercased() ?? "") : L("\(other) closing")) }
         let udp = host.connections.count - tcp.count
-        if udp > 0 { parts.append(udp == 1 ? "1 flow" : "\(udp) flows") }
+        if udp > 0 { parts.append(udp == 1 ? L("1 flow") : L("\(udp) flows")) }
         parts.append(Self.owners(host.connections.map(\.pid), names: names))
         let measuredAny = measured && host.connections.contains(where: \.measured)
         let rate = measuredAny && host.perSecond >= 1 ? Format.rate(host.perSecond) : "–"
@@ -322,12 +322,12 @@ final class ConnectionRow: DrawnView, SelfAuditing {
     }
 
     func set(port: UInt16, sockets: [AppConnection], names: [Int32: String]) {
-        let protocols = Set(sockets.map(\.protocolName)).sorted().joined(separator: " and ")
+        let protocols = Set(sockets.map(\.protocolName)).sorted().joined(separator: L(" and "))
         let local = sockets.allSatisfy { $0.local.isLoopback }
-        var parts = [protocols, local ? "This Mac only" : "All networks"]
+        var parts = [protocols, local ? L("This Mac only") : L("All networks")]
         parts.append(Self.owners(sockets.map(\.pid), names: names))
         let service = HostLabel.service(port: port).map { " · \($0)" } ?? ""
-        set("Port \(port)", parts.joined(separator: " · "), "", "", tip: "Port \(port)\(service)")
+        set(L("Port \(port)"), parts.joined(separator: " · "), "", "", tip: L("Port \(port)\(service)"))
     }
 
     /// "443 TCP", "443 TCP and UDP", "443, 80 TCP".
@@ -338,17 +338,17 @@ final class ConnectionRow: DrawnView, SelfAuditing {
             if byPort[port] == nil { order.append(port) }
             byPort[port, default: []].insert(udp ? "UDP" : "TCP")
         }
-        let protocols = Set(byPort.values.flatMap { $0 }).sorted().joined(separator: " and ")
-        let shown = order.prefix(2).map(String.init).joined(separator: ", ") + (order.count > 2 ? " and more" : "")
+        let protocols = Set(byPort.values.flatMap { $0 }).sorted().joined(separator: L(" and "))
+        let shown = order.prefix(2).map(String.init).joined(separator: ", ") + (order.count > 2 ? L(" and more") : "")
         return "\(shown) \(protocols)"
     }
 
     static func owners(_ pids: [Int32], names: [Int32: String]) -> String {
         var counts: [String: Int] = [:]
-        for pid in pids { counts[names[pid] ?? "Process \(pid)", default: 0] += 1 }
+        for pid in pids { counts[names[pid] ?? L("Process \(pid)"), default: 0] += 1 }
         let sorted = counts.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
         guard let first = sorted.first else { return "" }
-        return sorted.count == 1 ? first.key : "\(first.key) and \(sorted.count - 1) more"
+        return sorted.count == 1 ? first.key : L("\(first.key) and \(sorted.count - 1) more")
     }
 
     private static let nameFont = Theme.sans(13)

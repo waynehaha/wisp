@@ -1,3 +1,4 @@
+import WispCore
 import AppKit
 
 /// Colours and type for the card style: light grey ground, white cards with a
@@ -150,7 +151,7 @@ enum Theme {
             "Most data": "chart.bar.fill", "Hosts": "server.rack",
             "Neural Engine": "brain", "Containers": "shippingbox.fill", "Projects": "folder.fill", "Coding Agents": "sparkles",
         ]
-        return table[name] ?? "circle.fill"
+        return table[name] ?? table.first(where: { L10n.string($0.key) == name })?.value ?? "circle.fill"
     }
 
     static var reduceMotion: Bool {
